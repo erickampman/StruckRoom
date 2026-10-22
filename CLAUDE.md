@@ -123,6 +123,15 @@ Never checked on Linux, so check these by hand and record what you find in this 
 - Sound and MIDI in **StageHand** (`~/dev/dev-audio/StageHand`; Linux-first: JACK through PipeWire, the
   ALSA sequencer) and REAPER.
 
+**First Linux build (2026-10-22, i3-9100, gcc).** A fresh checkout builds and passes ctest and
+clap-validator, and plays in a host. The room xrunned constantly until the mode loop and strike
+retune were built twice (`ROOM_HOT` in `Room.cpp`, `target_clones` for x86-64-v3 and the
+baseline): plain x86-64 has 16 SSE registers and the loop's 8-wide vectors spilled every sample.
+Same scene as the M4 figures, before → after: Detail 12 69% → 15% of a core, 21 205% → 42%,
+32 349% → 71%. The first strike after a room setting changes still overruns one block (2.2 ms at
+Detail 12, 11.7 ms at 32): that is the mode-list rebuild. The `-Wpsabi` warning on Room.cpp comes
+from the baseline clone and is harmless.
+
 macOS-only pieces: `src/UI/BackingScale_mac.mm` (Retina scale; built only on Apple).
 
 **NanoVG stencil (seen on Linux, 2026-10-16).** NanoVG fills non-convex paths through the stencil
