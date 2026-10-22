@@ -23,8 +23,12 @@ M/S pair. It is tuned at each note-on, never per block: bends and glides move on
   the direct/room balance, not the loudness), the M/S decode is equal-power, and `kOutputTrim` 0.35
   leaves chord headroom. The engine's Final clamps each voice at 1, but voices sum after it, so
   `softKnee` in plugin.cpp (linear to 0.7, tanh above) rounds off coincident chord transients.
-- **Detail** (room modes up to N × f0) is the CPU control. Measured, Apple Silicon, 48 kHz, 64-sample
-  blocks, 4-note chord: Detail 12 (default) 16% of a core, worst strike block 0.44 ms; Detail 16 40%.
+- **Detail** (room modes up to N × f0) is the CPU control. The mode loop is register-blocked (16 modes
+  in vector registers for a whole chunk, accumulating into per-sample vectors in L1) and the strike
+  retune uses branch-free polynomial sin/exp, so both vectorise. Measured on an M4, 48 kHz, 64-sample
+  blocks, a 4-note chord struck every 2 s: Detail 12 8% of a core (worst block 0.19 ms), 21 24%
+  (0.51 ms), 32 41% (0.86 ms of 1.33). The first version streamed every mode's arrays per sample and
+  xrunned from Detail ~21 (79%, worst block 2.8 ms). Above ~28 the 16384-mode cap binds.
 - The editor has three tabs (header): **Object** (StruckSynth's page, unchanged), **Room** (a
   `RoomMap` — drag the object and listener, which are Src/Mic X/Y — beside Room, Placement and Mix),
   **Walls** (both pairs, two rows of four via `GroupBox::setColumns`, over `RoomDecay`, every room

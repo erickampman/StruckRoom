@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 
 namespace {
 
@@ -37,6 +39,30 @@ constexpr double kRebuildSeconds = 0.03;
 // wall is struck (t = 0).
 inline double safeRatio(double num, double den) {
     return (std::fabs(den) > 1e-9) ? std::clamp(num / den, 0.0, 1.0) : 0.0;
+}
+
+// Branch-free float sin and exp for the retune loop, so it vectorises: the library calls do not, and
+// a chord retunes thousands of modes per voice in one block. Each is only as general as its caller.
+
+// sin(x) for |x| <= pi/2: odd Taylor series through x^11, error < 6e-8.
+inline float sinHalfPi(float x) {
+    const float x2 = x * x;
+    return x * (1.0f + x2 * (-1.0f / 6 + x2 * (1.0f / 120 + x2 * (-1.0f / 5040
+             + x2 * (1.0f / 362880 + x2 * (-1.0f / 39916800))))));
+}
+
+// exp(x) for x <= 0. Near zero (the slow decays, where 1 - r is tiny and its precision IS the
+// decay time) a Taylor series keeps full relative accuracy in x; further out, 2^(x log2 e) by
+// splitting off the exponent bits, where a part in 10^7 no longer matters.
+inline float expNonPositive(float x) {
+    const float near = 1.0f + x * (1.0f + x * (0.5f + x * (1.0f / 6 + x * (1.0f / 24 + x * (1.0f / 120)))));
+    const float t  = std::max(x * 1.44269504f, -126.0f);
+    const float fl = std::floor(t);
+    const float f  = t - fl;                                   // 0..1
+    const float p  = 1.0f + f * (0.693147f + f * (0.240227f + f * (0.0555041f + f * (0.00961813f + f * 0.00133336f))));
+    const int32_t bits = (int32_t)(fl + 127.0f) << 23;
+    float scale; std::memcpy(&scale, &bits, sizeof scale);
+    return (x > -0.1f) ? near : p * scale;
 }
 
 inline double spreadGain(double r) { return 1.0 / std::sqrt(std::max(r, 0.1)); }   // 2-D: 1/sqrt(r)
@@ -205,42 +231,46 @@ void Room::retunePitch() {
     const double subsonic = 20.0;
 
     // --- modes ---
+    // Runs on every strike, for every voice struck, so it is kept lean: float throughout (the
+    // coefficients are stored as float, so double bought nothing), and the list is sorted by
+    // frequency, so the Nyquist and subsonic limits are index ranges found by binary search.
     const int oldCount = mCount;
-    int n = 0;
-    for (; n < mGeomCount; ++n) {
-        const double f = (double)mRatio[n] * f0;
-        if (f > nyquist) break;
-        const double w    = 2.0 * M_PI * f / fs;
-        const double rate = f0 * (double)mLoss[n] + airRate;          // energy, 1/s
-        const double r    = std::min(std::exp(-0.5 * rate / fs), 0.9999995);
-        const double sw = std::sin(w), cw = std::cos(w);
-        const bool audible = f >= subsonic;
+    const int n   = (int)(std::upper_bound(mRatio, mRatio + mGeomCount, (float)(nyquist / f0)) - mRatio);
+    const int sub = (int)(std::lower_bound(mRatio, mRatio + n, (float)(subsonic / f0)) - mRatio);
+    const float w0    = (float)(2.0 * M_PI * f0 / fs);
+    const float lossK = (float)(-0.5 * f0 / fs);        // energy rate -> log of the pole radius
+    const float airK  = (float)(-0.5 * airRate / fs);
+    const float late  = s.late;
+    for (int i = 0; i < n; ++i) {
+        const float w  = mRatio[i] * w0;                     // 0 .. 0.9 pi (Nyquist cut above)
+        const float r  = std::min(expNonPositive(lossK * mLoss[i] + airK), 0.9999995f);
+        const float sw = sinHalfPi(std::min(w, (float)M_PI - w));
+        const float cw = sinHalfPi((float)M_PI_2 - w);
 
         // A mode still ringing from the last strike is carried over at the same
         // amplitude and phase. Its two state samples alone would read as a far
         // bigger amplitude at a lower frequency (near DC, a growing ramp). With
         // y1 = A sin(theta) and c = A cos(theta) from the OLD coefficients, the
         // new y2 is A/r' * sin(theta - w').
-        if (n < oldCount) {
-            if (audible) {
-                const double c = (double)mQA[n] * mY1[n] + (double)mQB[n] * mY2[n];
-                mY2[n] = (float)(((double)mY1[n] * cw - c * sw) / r);
-            } else {
-                mY1[n] = mY2[n] = 0.0f;
-            }
+        if (i < oldCount) {
+            const float c = mQA[i] * mY1[i] + mQB[i] * mY2[i];
+            mY2[i] = (mY1[i] * cw - c * sw) / r;
         }
 
-        mA1[n] = (float)(2.0 * r * cw);
-        mA2[n] = (float)(-r * r);
-        mB[n]  = (float)sw;
+        mA1[i] = 2.0f * r * cw;
+        mA2[i] = -r * r;
+        mB[i]  = sw;
         // For y[n] = A r^n sin(theta): A r^n cos(theta) = (cos w * y[n] - r * y[n-1]) / sin w.
-        mQA[n] = (float)(cw / sw);
-        mQB[n] = (float)(-r / sw);
-        mGM[n] = audible ? (float)(s.late * mGM0[n]) : 0.0f;
-        mGS[n] = audible ? (float)(s.late * mGS0[n]) : 0.0f;
-        if (!audible) mB[n] = 0.0f;
+        mQA[i] = cw / sw;
+        mQB[i] = -r / sw;
+        mGM[i] = late * mGM0[i];
+        mGS[i] = late * mGS0[i];
     }
-    const int padded = (n + 7) & ~7;
+    for (int i = 0; i < sub; ++i) {
+        mB[i] = mGM[i] = mGS[i] = 0.0f;
+        mY1[i] = mY2[i] = 0.0f;
+    }
+    const int padded = (n + 15) & ~15;   // processChunk takes modes sixteen at a time
     for (int i = n; i < padded; ++i) {
         mA1[i] = mA2[i] = mB[i] = mQA[i] = mQB[i] = mGM[i] = mGS[i] = 0.0f;
     }
@@ -413,33 +443,51 @@ void Room::processChunk(const float* in, float* outL, float* outR, int n) {
     }
 
     // --- room modes ---
-    const int modes = mCount;
+    // Register-blocked: eight modes at a time stay in vector registers for the whole chunk, and
+    // their outputs accumulate into per-sample vectors that live in L1. Walking every mode's nine
+    // arrays once per SAMPLE (the obvious loop) streamed ~36 bytes per mode per sample from cache
+    // and memory; this touches them once per chunk. The 8 lanes are summed once per sample at the
+    // end, not once per mode. Same arithmetic, same results; several times faster at high Detail.
+    const int modes = mCount;   // a multiple of 16 (retunePitch pads it)
     if (modes > 0) {
-        const float* __restrict a1 = mA1;
-        const float* __restrict a2 = mA2;
-        const float* __restrict b  = mB;
-        const float* __restrict gm = mGM;
-        const float* __restrict gs = mGS;
-        const float* __restrict qa = mQA;
-        const float* __restrict qb = mQB;
-        float* __restrict y1 = mY1;
-        float* __restrict y2 = mY2;
-        for (int s = 0; s < n; ++s) {
-            const float x = late[s];
-            float accM = 0.0f, accS = 0.0f;
-            for (int i = 0; i < modes; ++i) {
-                const float y = b[i] * x + a1[i] * y1[i] + a2[i] * y2[i];
-                accM += gm[i] * y;
-                accS += gs[i] * (qa[i] * y + qb[i] * y1[i]);
-                y2[i] = y1[i];
-                y1[i] = y;
+        typedef float v8 __attribute__((vector_size(32)));
+        alignas(32) v8 accM[kMaxBlock], accS[kMaxBlock];
+        const v8 zero = {};
+        for (int s = 0; s < n; ++s) { accM[s] = zero; accS[s] = zero; }
+
+        auto load = [](const float* p) { v8 v; std::memcpy(&v, p, sizeof v); return v; };
+        auto flush = [](v8& v) {   // denormals: a long tail spends most of its life near zero
+            for (int k = 0; k < 8; ++k) if (std::fabs(v[k]) < kDenormalFloor) v[k] = 0.0f;
+        };
+        // Two groups of eight in flight: each group's recursion waits on its previous sample, so
+        // a second, independent group fills the pipeline. Written (b*x + a2*y2) + a1*y1 so only the
+        // last multiply-add depends on the previous output. mCount is padded to 16 for this.
+        for (int i = 0; i < modes; i += 16) {
+            const v8 a1 = load(mA1 + i), a2 = load(mA2 + i), b = load(mB + i);
+            const v8 c1 = load(mA1 + i + 8), c2 = load(mA2 + i + 8), d = load(mB + i + 8);
+            v8 y1 = load(mY1 + i), y2 = load(mY2 + i);
+            v8 z1 = load(mY1 + i + 8), z2 = load(mY2 + i + 8);
+            const v8 gm = load(mGM + i), gs = load(mGS + i), qa = load(mQA + i), qb = load(mQB + i);
+            const v8 hm = load(mGM + i + 8), hs = load(mGS + i + 8), ra = load(mQA + i + 8), rb = load(mQB + i + 8);
+            for (int s = 0; s < n; ++s) {
+                const float x = late[s];
+                const v8 y = (b * x + a2 * y2) + a1 * y1;
+                const v8 z = (d * x + c2 * z2) + c1 * z1;
+                accM[s] += gm * y + hm * z;
+                accS[s] += gs * (qa * y + qb * y1) + hs * (ra * z + rb * z1);
+                y2 = y1; y1 = y;
+                z2 = z1; z1 = z;
             }
-            mid[s]  += accM;
-            side[s] += accS;
+            flush(y1); flush(y2); flush(z1); flush(z2);
+            std::memcpy(mY1 + i, &y1, sizeof y1);
+            std::memcpy(mY2 + i, &y2, sizeof y2);
+            std::memcpy(mY1 + i + 8, &z1, sizeof z1);
+            std::memcpy(mY2 + i + 8, &z2, sizeof z2);
         }
-        for (int i = 0; i < modes; ++i) {
-            if (std::fabs(y1[i]) < kDenormalFloor) y1[i] = 0.0f;
-            if (std::fabs(y2[i]) < kDenormalFloor) y2[i] = 0.0f;
+        for (int s = 0; s < n; ++s) {
+            const v8 m = accM[s], sd = accS[s];
+            mid[s]  += ((m[0] + m[1]) + (m[2] + m[3])) + ((m[4] + m[5]) + (m[6] + m[7]));
+            side[s] += ((sd[0] + sd[1]) + (sd[2] + sd[3])) + ((sd[4] + sd[5]) + (sd[6] + sd[7]));
         }
     }
 

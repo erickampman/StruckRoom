@@ -45,8 +45,8 @@ frequency, coloured by which pair of walls it mostly reflects from. `tools/rooml
 prototyped in, with notes on what its first experiments showed.
 
 **CPU.** Every voice carries its own room, so voices are expensive: **Poly 4** is the default
-(Mono, Poly 10, 20 and 32 are still there). Measured on Apple Silicon at 48 kHz with 64-sample
-buffers, a 4-note chord costs about 16% of a core at Detail 12 and 40% at Detail 16.
+(Mono, Poly 10, 20 and 32 are still there). Measured on an M4 at 48 kHz with 64-sample buffers, a
+4-note chord costs about 8% of a core at Detail 12, 24% at Detail 21 and 41% at Detail 32.
 
 ## Status
 

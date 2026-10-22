@@ -85,7 +85,7 @@ private:
     void retunePitch();          // coefficients and paths for mFundamental: on strike
     void processChunk(const float* in, float* outL, float* outR, int n);
 
-    // --- room modes, structure of arrays, padded to a multiple of 8 --------------
+    // --- room modes, structure of arrays, padded to a multiple of 16 --------------
     alignas(32) float mA1[kMaxModes], mA2[kMaxModes], mB[kMaxModes];
     alignas(32) float mGM[kMaxModes], mGS[kMaxModes];      // omni and figure-8 gains
     alignas(32) float mQA[kMaxModes], mQB[kMaxModes];      // quadrature from y[n], y[n-1]
