@@ -455,7 +455,11 @@ ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int 
         const v8 zero = {};
         for (int s = 0; s < n; ++s) { accM[s] = zero; accS[s] = zero; }
 
-        auto load = [](const float* p) { v8 v; std::memcpy(&v, p, sizeof v); return v; };
+        // An unaligned view of eight floats. load returns a reference, not a v8: returning a
+        // 32-byte vector by value from a plain function is ABI-dependent in the baseline clone
+        // (no AVX), which clang rejects.
+        typedef float v8u __attribute__((vector_size(32), aligned(4), may_alias));
+        auto load = [](const float* p) -> const v8u& { return *reinterpret_cast<const v8u*>(p); };
         auto flush = [](v8& v) {   // denormals: a long tail spends most of its life near zero
             for (int k = 0; k < 8; ++k) if (std::fabs(v[k]) < kDenormalFloor) v[k] = 0.0f;
         };
