@@ -518,6 +518,24 @@ void plug_on_main_thread(const clap_plugin_t* plugin) {
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Output safety
+// ---------------------------------------------------------------------------------------------
+
+// Each voice is clamped at full scale by the engine's Final stage, but the voices are summed after
+// it, and a struck chord lines up its strike transients: four full-velocity notes reach about twice
+// full scale for a sample or two (RMS stays near 0.05). Linear below kKnee, then a tanh curve that
+// approaches 1, so those spikes are rounded off instead of being hard-clipped by the host.
+constexpr float kKnee = 0.7f;
+
+void softKnee(float* buffer, uint32_t frames) {
+    for (uint32_t i = 0; i < frames; ++i) {
+        const float x = buffer[i], a = std::fabs(x);
+        if (a > kKnee)
+            buffer[i] = std::copysign(kKnee + (1.0f - kKnee) * std::tanh((a - kKnee) / (1.0f - kKnee)), x);
+    }
+}
+
 clap_process_status plug_process(const clap_plugin_t* plugin, const clap_process_t* process) {
     Plugin* p = self(plugin);
 
@@ -570,6 +588,8 @@ clap_process_status plug_process(const clap_plugin_t* plugin, const clap_process
         if (end - offset > MODULE_BUFF_SIZE) end = offset + MODULE_BUFF_SIZE;
 
         p->voiceManager->process(end - offset, left + offset, right + offset);
+        softKnee(left + offset, end - offset);
+        softKnee(right + offset, end - offset);
         reportEndedNotes(p, process->out_events, end - 1);
         offset = end;
     }

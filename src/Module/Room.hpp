@@ -121,6 +121,7 @@ private:
     Settings mSettings, mPending;
     bool     mGeomDirty = true, mPitchDirty = true, mSettingsDirty = false;
     uint32_t mSinceRebuild = 0;
+    float    mOutGain = 1.0f;          // see retunePitch: referenced to the direct path
     double   mSampleRate = 48000.0;
     float    mFundamental = 261.6256f;
 };

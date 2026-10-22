@@ -23,6 +23,12 @@ constexpr double kRingGain = 0.0079;
 
 constexpr double kDefaultArea = 3.0 * 2.2;        // where kLateGain was measured
 
+// Overall level after the room, so a struck note leaves headroom for chords: the engine's Final
+// stage hard-clips at full scale. Measured: StruckSynth alone peaks near 0.95 on a high Bell at full
+// velocity, and the room adds 30-50% at the strike; at 0.35 a single note peaks near a third of full
+// scale, leaving room for chords (plugin.cpp rounds off what still goes over, see softKnee).
+constexpr double kOutputTrim = 0.35;
+
 // Applied settings are rebuilt at most this often while a knob moves.
 constexpr double kRebuildSeconds = 0.03;
 
@@ -263,6 +269,10 @@ void Room::retunePitch() {
         p.gS = (float)(g * spreadGain(r) * ux);
     };
     setPath(mDirect, S, s.direct);
+    // Every path's level is relative to the direct sound's spreading: dividing the whole output by
+    // it keeps the loudness put as the object and listener move, while the balance of direct, early
+    // and late still changes with distance the way it would in a real room.
+    mOutGain = (float)(std::sqrt(std::max(dist(S, Mic), 0.1)) * kOutputTrim);
     mLateTap.delay = mDirect.delay;    // the modes start when the sound arrives
 
     for (int pair = 0; pair < 2; ++pair) {
@@ -433,9 +443,13 @@ void Room::processChunk(const float* in, float* outL, float* outR, int n) {
         }
     }
 
+    // Equal-power M/S decode: a centred source keeps its level at any width, and width 0 is mono
+    // at unity. (M + S undecoded put a source at one side at twice the level in that channel.)
     const float width = mSettings.micWidth;
+    const float g = mOutGain / std::sqrt(1.0f + width * width);
+    const float gs = g * width;
     for (int s = 0; s < n; ++s) {
-        outL[s] = mid[s] + width * side[s];
-        outR[s] = mid[s] - width * side[s];
+        outL[s] = g * mid[s] + gs * side[s];
+        outR[s] = g * mid[s] - gs * side[s];
     }
 }

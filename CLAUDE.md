@@ -19,6 +19,10 @@ M/S pair. It is tuned at each note-on, never per block: bends and glides move on
 - Two stages: settings changes rebuild the mode list (throttled to 30 ms); a strike only recomputes
   coefficients. A retune carries each ringing mode's amplitude and phase over; skipping that blows up
   (a resonator's state read at a much lower frequency is a huge amplitude). Wall banks reset instead.
+- Gain staging: the room's whole output is referenced to the direct path's spreading (placement moves
+  the direct/room balance, not the loudness), the M/S decode is equal-power, and `kOutputTrim` 0.35
+  leaves chord headroom. The engine's Final clamps each voice at 1, but voices sum after it, so
+  `softKnee` in plugin.cpp (linear to 0.7, tanh above) rounds off coincident chord transients.
 - **Detail** (room modes up to N × f0) is the CPU control. Measured, Apple Silicon, 48 kHz, 64-sample
   blocks, 4-note chord: Detail 12 (default) 16% of a core, worst strike block 0.44 ms; Detail 16 40%.
 - The editor has three tabs (header): **Object** (StruckSynth's page, unchanged), **Room** (a
