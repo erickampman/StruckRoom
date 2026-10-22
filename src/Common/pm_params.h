@@ -92,6 +92,7 @@ enum ModuleParamKind : NSUInteger {
    ModuleParamKindCVMixer, // IFSynth: combine mod sources (add/multiply, per-input enable)
    ModuleParamKindStrike,    // StruckRoom: note/gate → shaped excitation burst
    ModuleParamKindModalBank, // StruckRoom: bank of damped modal resonators
+   ModuleParamKindRoom,      // StruckRoom: the pitch-scaled 2-D room the object sits in
 };
 
 // Module instance — the middle byte of a param address (1..24).
@@ -385,7 +386,50 @@ enum ModalBankParamItem : NSUInteger {
    // Damping-tilt modulation (appended)
    ModalBankParamItemDampTiltModInput, // connection: added to DampTilt, scaled by the level below
    ModalBankParamItemDampTiltModLevel,
+   // Decay tracking (appended): T60 *= (f(note 60) / f0)^track, so 1 makes the decay scale with
+   // the note the way the room's own times do.
+   ModalBankParamItemDecayTrack,
 };
+
+// --- StruckRoom: Room --------------------------------------------------------------------
+// The 2-D room the object sits in; core in Room.hpp/.cpp. Lengths are in wavelengths of the note.
+// Wall items come in two identical runs: side walls (x), then front/back walls (y).
+enum RoomParamItem : NSUInteger {
+   RoomParamItemInput = 1,       // connection: the object's sound (ModalBank out)
+   RoomParamItemPitchInput,      // connection: note pitch, octaves re A440 (read at each strike)
+   RoomParamItemPitch,           // transpose, octaves (the object's Pitch, so the room follows it)
+   RoomParamItemWidth,           // wavelengths at note 60
+   RoomParamItemDepth,
+   RoomParamItemRoomTrack,       // 1 = the room scales with the note, 0 = fixed physical size
+   RoomParamItemDecayTrack,      // 1 = wall and air T60s scale as 1/f0, 0 = seconds
+   RoomParamItemAir,             // air T60, seconds at note 60
+   RoomParamItemDetail,          // room modes up to this multiple of f0
+   RoomParamItemSrcX,            // placement, 0..1 of the room
+   RoomParamItemSrcY,
+   RoomParamItemMicX,
+   RoomParamItemMicY,
+   RoomParamItemMicWidth,        // M/S side level
+   RoomParamItemDirect,
+   RoomParamItemEarly,
+   RoomParamItemLate,
+   RoomParamItemSideAbsorb,      // side walls
+   RoomParamItemSideBright,
+   RoomParamItemSideRing,
+   RoomParamItemSideRingMat,
+   RoomParamItemSideRingRatio,
+   RoomParamItemSideRingT60,
+   RoomParamItemSideRingTilt,
+   RoomParamItemSideLink,
+   RoomParamItemFBAbsorb,        // front/back walls: same order
+   RoomParamItemFBBright,
+   RoomParamItemFBRing,
+   RoomParamItemFBRingMat,
+   RoomParamItemFBRingRatio,
+   RoomParamItemFBRingT60,
+   RoomParamItemFBRingTilt,
+   RoomParamItemFBLink,
+};
+inline constexpr NSUInteger kRoomWallItems = RoomParamItemFBAbsorb - RoomParamItemSideAbsorb;
 
 // Material selector for ModalBankParamItemMaterial. Order MUST match kModalMaterials
 // (ModalMaterials.hpp) for the static tables, then the procedural generators whose order MUST

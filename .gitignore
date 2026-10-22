@@ -9,3 +9,5 @@ compile_commands.json
 *.swp
 *~
 .DS_Store
+tools/roomlab/build/
+tools/roomlab/renders/

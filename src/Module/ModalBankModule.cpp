@@ -139,7 +139,11 @@ const KPBuffPair* ProcessModalBankModule(uint64_t processCallID, uint32_t count,
     // change each mode's decay coefficient, not just the next strike.
     const float decayMod = readControl(module, ModalBankParamItemDecayModInput, processCallID, count)
                          * module->getParamValue(ModalBankParamItemDecayModLevel);
-    bank.setDecayT60(module->getParamValue(ModalBankParamItemDecayT60) * std::exp2(decayMod));
+    // Decay Track: T60 *= (f(note 60) / f0)^track, so at 1 the decay scales with the note like the
+    // room's own times, and a whole scene transposes as a unit.
+    const float trackScale = std::pow(261.6255653f / bank.fundamental(),
+                                      module->getParamValue(ModalBankParamItemDecayTrack));
+    bank.setDecayT60(module->getParamValue(ModalBankParamItemDecayT60) * std::exp2(decayMod) * trackScale);
     const float tiltMod = readControl(module, ModalBankParamItemDampTiltModInput, processCallID, count)
                         * module->getParamValue(ModalBankParamItemDampTiltModLevel);
     bank.setDampTilt(module->getParamValue(ModalBankParamItemDampTilt) + tiltMod);

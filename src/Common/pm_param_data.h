@@ -26,5 +26,6 @@ extern const ModuleParamConstantsGroup channelPressureConstantsGroup;
 extern const ModuleParamConstantsGroup ccConverterConstantsGroup;
 extern const ModuleParamConstantsGroup strikeConstantsGroup;
 extern const ModuleParamConstantsGroup modalBankConstantsGroup;
+extern const ModuleParamConstantsGroup roomConstantsGroup;
 
 #endif // PM_PARAM_DATA_H

@@ -177,7 +177,7 @@ float paramOf(const Plugin* plugin, uint32_t index) {
 }
 
 bool isMonoMode(const Plugin* plugin) {
-    return int(paramOf(plugin, kParamVoiceMode) + 0.5f) == 0;   // 0 = Mono, 1 = Poly 10, 2 = Poly 20, 3 = Poly 32
+    return int(paramOf(plugin, kParamVoiceMode) + 0.5f) == 0;   // 0 = Mono, 1..4 = Poly 4 / 10 / 20 / 32
 }
 
 // Pitch glide. Only active in mono; in poly a freshly allocated voice would audibly scoop from its
@@ -189,23 +189,26 @@ void applySlew(Plugin* plugin) {
 }
 
 // Poly voice counts by Voices choice. The engine allocates MAX_VOICES (32) voices up front, in
-// plug_activate, so switching only changes how many the VoiceManager hands out.
-constexpr uint32_t kPolyVoices    = 10;
-constexpr uint32_t kMidPolyVoices = 20;
-constexpr uint32_t kMaxPolyVoices = 32;
+// plug_activate, so switching only changes how many the VoiceManager hands out. Poly 4 is the
+// default: every voice carries its own room, thousands of resonators, so voices cost real CPU.
+constexpr uint32_t kSmallPolyVoices = 4;
+constexpr uint32_t kPolyVoices      = 10;
+constexpr uint32_t kMidPolyVoices   = 20;
+constexpr uint32_t kMaxPolyVoices   = 32;
 static_assert(kMaxPolyVoices <= MAX_VOICES, "the engine allocates no more than MAX_VOICES");
 
 uint32_t currentVoiceCount(const Plugin* plugin) {
     switch (int(paramOf(plugin, kParamVoiceMode) + 0.5f)) {
     case 0:  return 1;
-    case 2:  return kMidPolyVoices;
-    case 3:  return kMaxPolyVoices;
-    default: return kPolyVoices;
+    case 2:  return kPolyVoices;
+    case 3:  return kMidPolyVoices;
+    case 4:  return kMaxPolyVoices;
+    default: return kSmallPolyVoices;
     }
 }
 
 // Mono = a single voice driven through VoiceManager's held-note stack (its "legato" config), so a
-// new note while another is held continues the same voice instead of stealing it. Poly = 10, 20 or 32 voices.
+// new note while another is held continues the same voice instead of stealing it. Poly = 4, 10, 20 or 32 voices.
 void applyVoiceMode(Plugin* plugin) {
     const bool mono = isMonoMode(plugin);
     setVoiceManager(plugin, midiParam(MIDIParamItemVoiceCount), float(currentVoiceCount(plugin)));
@@ -216,11 +219,15 @@ void applyVoiceMode(Plugin* plugin) {
 
 // Map a host parameter index onto its VoiceManager module item address. Globals handled specially
 // in applyParam (glide + voice mode) have no direct address here.
+constexpr AUParameterAddress roomParam(RoomParamItem item) {
+    return MODULE_PARAM_ADDRESS(ModuleParamKindRoom, ModuleInstance1, item);
+}
+
 AUParameterAddress vmAddress(uint32_t paramIndex) {
     switch (paramIndex) {
-    // Master output / stereo (ModalBank's own output stage)
+    // Master level (ModalBank's output stage, ahead of the room); stereo width is the room's M/S pair
     case kParamLevel:          return MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemLevel);
-    case kParamSpread:         return MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemSpread);
+    case kParamSpread:         return roomParam(RoomParamItemMicWidth);
     // Strike (exciter)
     case kParamStrikeType:     return MODULE_PARAM_ADDRESS(ModuleParamKindStrike, ModuleInstance1, StrikeParamItemType);
     case kParamHardness:       return MODULE_PARAM_ADDRESS(ModuleParamKindStrike, ModuleInstance1, StrikeParamItemHardness);
@@ -245,7 +252,27 @@ AUParameterAddress vmAddress(uint32_t paramIndex) {
     case kParamPressToDecay:   return MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemDecayModLevel);
     case kParamTimbreToTilt:   return MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemDampTiltModLevel);
     case kParamTimbreToPos:    return MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemStrikeModLevel);
-    default:                   return 0;
+    // Room
+    case kParamRoomWidth:      return roomParam(RoomParamItemWidth);
+    case kParamRoomDepth:      return roomParam(RoomParamItemDepth);
+    case kParamRoomTrack:      return roomParam(RoomParamItemRoomTrack);
+    case kParamRoomAir:        return roomParam(RoomParamItemAir);
+    case kParamRoomDetail:     return roomParam(RoomParamItemDetail);
+    case kParamSrcX:           return roomParam(RoomParamItemSrcX);
+    case kParamSrcY:           return roomParam(RoomParamItemSrcY);
+    case kParamMicX:           return roomParam(RoomParamItemMicX);
+    case kParamMicY:           return roomParam(RoomParamItemMicY);
+    case kParamDirect:         return roomParam(RoomParamItemDirect);
+    case kParamEarly:          return roomParam(RoomParamItemEarly);
+    case kParamLate:           return roomParam(RoomParamItemLate);
+    default:
+        // The two wall pairs: the same eight params in the same order, plugin and module side.
+        if (paramIndex >= kParamSideAbsorb && paramIndex <= kParamFBLink) {
+            const uint32_t k = paramIndex - kParamSideAbsorb;
+            static_assert(kParamFBAbsorb - kParamSideAbsorb == kRoomWallItems, "wall param runs disagree");
+            return roomParam(RoomParamItem(RoomParamItemSideAbsorb + k));
+        }
+        return 0;
     }
 }
 
@@ -259,6 +286,15 @@ void applyParam(Plugin* plugin, uint32_t index, float value) {
                                             MODULE_PARAM_FROM_BASE_AND_ITEM(channelPressure1Address, ChannelPressureParamItemMPE),
                                             MODULE_PARAM_FROM_BASE_AND_ITEM(timbre1Address, CCParamItemMPE) })
             setEngine(plugin, a, value);
+        return;
+    }
+    // The room is tuned to the object: it follows the object's transpose, and Decay Track scales
+    // the object's T60 as well as the room's.
+    if (index == uint32_t(kParamPitch))
+        setEngine(plugin, roomParam(RoomParamItemPitch), value);
+    if (index == uint32_t(kParamDecayTrack)) {
+        setEngine(plugin, roomParam(RoomParamItemDecayTrack), value);
+        setEngine(plugin, MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemDecayTrack), value);
         return;
     }
     const AUParameterAddress a = vmAddress(index);

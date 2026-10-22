@@ -13,10 +13,10 @@ namespace struckroom {
 
 enum ParamIndex {
    // --- Global ---
-   kParamVoiceMode = 0, // 0 = Mono (1 voice + glide), 1..3 = Poly 10 / 20 / 32
+   kParamVoiceMode = 0, // 0 = Mono (1 voice + glide), 1..4 = Poly 4 / 10 / 20 / 32
    kParamGlide,         // pitch glide — drives the Slew module's Rise and Fall together (mono)
    kParamLevel,         // master level → ModalBank Level
-   kParamSpread,        // stereo distribution of modes → ModalBank Spread
+   kParamSpread,        // the listener's stereo width → Room Mic Width (the M/S side level)
    // --- Strike (exciter) ---
    kParamStrikeType,        // 0 = Mallet, 1 = Noise burst
    kParamHardness,          // 0 = hard/bright 1-sample impulse .. 1 = soft/dark
@@ -43,6 +43,37 @@ enum ParamIndex {
    kParamPressToDecay,      // pressure → decay time, octaves of T60 at full pressure (+ rings longer)
    kParamTimbreToTilt,      // timbre → damping tilt, added to Damp at full timbre (+ darker tail)
    kParamTimbreToPos,       // timbre → strike position, added at full timbre (read at the strike)
+   // --- Room (appended): the pitch-scaled 2-D room the object sits in; lengths in wavelengths ---
+   kParamRoomWidth,         // wavelengths of the note (at note 60, see Room Track)
+   kParamRoomDepth,
+   kParamRoomTrack,         // 1 = the room scales with the note, 0 = a fixed physical room
+   kParamDecayTrack,        // 1 = every T60 (object, walls, air) scales as 1/f0: the whole scene transposes
+   kParamRoomAir,           // air T60, seconds at note 60
+   kParamRoomDetail,        // room modes up to this multiple of f0 (the CPU control)
+   kParamSrcX,              // where the object sits, 0..1 of the room
+   kParamSrcY,
+   kParamMicX,              // where the listener sits
+   kParamMicY,
+   kParamDirect,            // mix: the object's own sound
+   kParamEarly,             //      first reflections
+   kParamLate,              //      the standing waves (room modes)
+   // --- Walls (appended): side walls (x), then front/back (y), the same eight each ---
+   kParamSideAbsorb,        // broadband absorption 0..1
+   kParamSideBright,        // HF damping corner, octaves above f0 (8 ~ none)
+   kParamSideRing,          // wall resonator level (0 = the wall doesn't ring)
+   kParamSideRingMat,       // the wall's material (the 12 static tables)
+   kParamSideRingRatio,     // wall fundamental / note
+   kParamSideRingDecay,     // wall T60, seconds
+   kParamSideRingDamp,      // the wall bank's damping tilt
+   kParamSideLink,          // 1 = the wall rings with the energy it absorbed
+   kParamFBAbsorb,
+   kParamFBBright,
+   kParamFBRing,
+   kParamFBRingMat,
+   kParamFBRingRatio,
+   kParamFBRingDecay,
+   kParamFBRingDamp,
+   kParamFBLink,
    kParamCount
 };
 
@@ -59,10 +90,10 @@ struct ParamSpec {
 
 static constexpr ParamSpec kParams[kParamCount] = {
    // Global
-   {"Voices",     "voices",   "",    0.0f,   3.0f,   1.0f,  false, true },
+   {"Voices",     "voices",   "",    0.0f,   4.0f,   1.0f,  false, true },
    {"Glide",      "glide",    "s",   0.0001f, 2.0f,  0.01f, true,  false},
    {"Level",      "level",    "",    0.0f,   2.0f,   0.5f,  false, false},
-   {"Spread",     "spread",   "",    0.0f,   1.0f,   0.3f,  false, false},
+   {"Width",      "spread",   "",    0.0f,   1.0f,   1.0f,  false, false},
    // Strike
    {"Strike",     "strkType", "",    0.0f,   1.0f,   0.0f,  false, true },
    {"Hardness",   "hardness", "",    0.0f,   1.0f,   0.3f,  false, false},
@@ -89,6 +120,38 @@ static constexpr ParamSpec kParams[kParamCount] = {
    {"Press>Decay", "prsDecay", "oct", -4.0f, 4.0f,   0.0f,  false, false},
    {"Tmb>Tilt",   "tmbTilt",  "",    -3.0f,  3.0f,   0.0f,  false, false},
    {"Tmb>Pos",    "tmbPos",   "",    -1.0f,  1.0f,   0.0f,  false, false},
+   // Room
+   {"Room W",     "roomW",    "wl",  0.25f, 16.0f,   3.0f,  true,  false},
+   {"Room D",     "roomD",    "wl",  0.25f, 16.0f,   2.2f,  true,  false},
+   {"Room Track", "roomTrk",  "",    0.0f,   1.0f,   1.0f,  false, false},
+   {"Decay Track","decayTrk", "",    0.0f,   1.0f,   0.0f,  false, false},
+   {"Air",        "air",      "s",   0.5f,  30.0f,  12.0f,  true,  false},
+   {"Detail",     "detail",   "x f0", 2.0f, 64.0f,  12.0f,  true,  false},
+   {"Src X",      "srcX",     "",    0.0f,   1.0f,   0.31f, false, false},
+   {"Src Y",      "srcY",     "",    0.0f,   1.0f,   0.37f, false, false},
+   {"Mic X",      "micX",     "",    0.0f,   1.0f,   0.62f, false, false},
+   {"Mic Y",      "micY",     "",    0.0f,   1.0f,   0.71f, false, false},
+   {"Direct",     "direct",   "",    0.0f,   2.0f,   1.0f,  false, false},
+   {"Early",      "early",    "",    0.0f,   2.0f,   1.0f,  false, false},
+   {"Late",       "late",     "",    0.0f,   2.0f,   1.0f,  false, false},
+   // Walls: side
+   {"Side Absorb", "sdAbs",   "",    0.0f,   1.0f,   0.15f, false, false},
+   {"Side Bright", "sdBrt",   "oct", 0.0f,   8.0f,   5.0f,  false, false},
+   {"Side Ring",  "sdRing",   "",    0.0f,   2.0f,   0.0f,  false, false},
+   {"Side Mat",   "sdMat",    "",    0.0f,  11.0f,   3.0f,  false, true },
+   {"Side Ratio", "sdRatio",  "",    0.0625f, 4.0f,  0.5f,  true,  false},
+   {"Side Decay", "sdDecay",  "s",   0.05f, 20.0f,   1.5f,  true,  false},
+   {"Side Damp",  "sdDamp",   "",    0.0f,   3.0f,   1.0f,  false, false},
+   {"Side Link",  "sdLink",   "",    0.0f,   1.0f,   0.0f,  false, true },
+   // Walls: front/back
+   {"F/B Absorb", "fbAbs",    "",    0.0f,   1.0f,   0.15f, false, false},
+   {"F/B Bright", "fbBrt",    "oct", 0.0f,   8.0f,   5.0f,  false, false},
+   {"F/B Ring",   "fbRing",   "",    0.0f,   2.0f,   0.0f,  false, false},
+   {"F/B Mat",    "fbMat",    "",    0.0f,  11.0f,   3.0f,  false, true },
+   {"F/B Ratio",  "fbRatio",  "",    0.0625f, 4.0f,  0.5f,  true,  false},
+   {"F/B Decay",  "fbDecay",  "s",   0.05f, 20.0f,   1.5f,  true,  false},
+   {"F/B Damp",   "fbDamp",   "",    0.0f,   3.0f,   1.0f,  false, false},
+   {"F/B Link",   "fbLink",   "",    0.0f,   1.0f,   0.0f,  false, true },
 };
 
 // Material picker labels (order matches ModalBankMaterial in pm_params.h). Null-terminated so the
@@ -124,7 +187,22 @@ static_assert(symbolIs(kParamVoiceMode, "voices") && symbolIs(kParamGlide, "glid
               && symbolIs(kParamDampBellCentre, "bellCtr") && symbolIs(kParamDampBellWidth, "bellWid")
               && symbolIs(kParamStrikePosition, "strkPos") && symbolIs(kParamBrightness, "bright")
               && symbolIs(kParamMpe, "mpe") && symbolIs(kParamPressToDecay, "prsDecay")
-              && symbolIs(kParamTimbreToTilt, "tmbTilt") && symbolIs(kParamTimbreToPos, "tmbPos"),
+              && symbolIs(kParamTimbreToTilt, "tmbTilt") && symbolIs(kParamTimbreToPos, "tmbPos")
+              && symbolIs(kParamRoomWidth, "roomW") && symbolIs(kParamRoomDepth, "roomD")
+              && symbolIs(kParamRoomTrack, "roomTrk") && symbolIs(kParamDecayTrack, "decayTrk")
+              && symbolIs(kParamRoomAir, "air") && symbolIs(kParamRoomDetail, "detail")
+              && symbolIs(kParamSrcX, "srcX") && symbolIs(kParamSrcY, "srcY")
+              && symbolIs(kParamMicX, "micX") && symbolIs(kParamMicY, "micY")
+              && symbolIs(kParamDirect, "direct") && symbolIs(kParamEarly, "early")
+              && symbolIs(kParamLate, "late")
+              && symbolIs(kParamSideAbsorb, "sdAbs") && symbolIs(kParamSideBright, "sdBrt")
+              && symbolIs(kParamSideRing, "sdRing") && symbolIs(kParamSideRingMat, "sdMat")
+              && symbolIs(kParamSideRingRatio, "sdRatio") && symbolIs(kParamSideRingDecay, "sdDecay")
+              && symbolIs(kParamSideRingDamp, "sdDamp") && symbolIs(kParamSideLink, "sdLink")
+              && symbolIs(kParamFBAbsorb, "fbAbs") && symbolIs(kParamFBBright, "fbBrt")
+              && symbolIs(kParamFBRing, "fbRing") && symbolIs(kParamFBRingMat, "fbMat")
+              && symbolIs(kParamFBRingRatio, "fbRatio") && symbolIs(kParamFBRingDecay, "fbDecay")
+              && symbolIs(kParamFBRingDamp, "fbDamp") && symbolIs(kParamFBLink, "fbLink"),
               "kParams rows are out of ParamIndex order");
 
 // --- dropdowns -------------------------------------------------------------------------------
@@ -132,7 +210,12 @@ static_assert(symbolIs(kParamVoiceMode, "voices") && symbolIs(kParamGlide, "glid
 // CLAP params extension (CLAP_PARAM_IS_ENUM + value/text conversion) and the UI dropdowns both read
 // it from here, so a label can never drift between the host's generic panel and our own.
 
-static constexpr const char* kVoiceModeChoices[]   = { "Mono", "Poly 10", "Poly 20", "Poly 32", nullptr };
+static constexpr const char* kVoiceModeChoices[]   = { "Mono", "Poly 4", "Poly 10", "Poly 20", "Poly 32", nullptr };
+static constexpr const char* kOffOnChoices[]       = { "Off", "On", nullptr };
+// A wall rings as one of the static material tables (the generators need a per-instance buffer).
+static constexpr const char* kWallMaterialNames[]  = {
+   "String", "Bar", "Tuned Bar", "Membrane", "Open Tube", "Closed Tube", "Tine", "Bell",
+   "Guitar Body", "Violin Body", "Soundboard", "Generic Body", nullptr };
 static constexpr const char* kStrikeTypeChoices[]  = { "Mallet", "Noise",   nullptr };
 static constexpr const char* kContactModeChoices[] = { "Note-Rel", "Wall-Clk", nullptr };
 static constexpr const char* kMpeChoices[]         = { "Off", "On",         nullptr };
@@ -145,6 +228,10 @@ inline const char* const* choicesFor(uint32_t index)
    case kParamContactMode: return kContactModeChoices;
    case kParamMpe:         return kMpeChoices;
    case kParamMaterial:    return kMaterialNames;
+   case kParamSideRingMat:
+   case kParamFBRingMat:   return kWallMaterialNames;
+   case kParamSideLink:
+   case kParamFBLink:      return kOffOnChoices;
    default:                return nullptr;
    }
 }

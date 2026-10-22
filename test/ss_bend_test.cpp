@@ -52,6 +52,10 @@ void configure(VoiceManager& vm, bool mono = false) {
    setBank(vm, ModalBankParamItemModeCount, 1.0f);
    setBank(vm, ModalBankParamItemDecayT60, 60.0f);
    setBank(vm, ModalBankParamItemSpread, 0.0f);
+   // These tests measure the object: hear it through the room's direct path alone, in mono.
+   for (const auto& [item, v] : { std::pair{RoomParamItemEarly, 0.0f}, std::pair{RoomParamItemLate, 0.0f},
+                                  std::pair{RoomParamItemMicWidth, 0.0f} })
+      vm.setParameter(MODULE_PARAM_ADDRESS(ModuleParamKindRoom, ModuleInstance1, item), v);
 }
 
 std::vector<float> render(VoiceManager& vm, uint32_t frames) {

@@ -218,9 +218,11 @@ public:
         fOutputGroup = makeGroup("Timbre", colOutput());
         fExpressionGroup = makeGroup("Expression", colExpression());
 
-        // Build each param control into its panel, in panel order.
+        // Build each param control into its panel, in panel order. The Room and Walls params have no
+        // panel yet: they live in the host's own parameter view until we know which ones matter.
         for (uint32_t i = 0; i < kParamCount; ++i)
         {
+            if (i >= kParamRoomWidth) continue;
             GroupBox* g = groupFor(i);
             if (isDropdownParam(i))
             {

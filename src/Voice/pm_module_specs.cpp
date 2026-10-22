@@ -19,6 +19,7 @@
 #include "ModalBankModule.hpp"
 #include "PitchBendConverterModule.hpp"
 #include "PitchConverterModule.hpp"
+#include "RoomModule.hpp"
 #include "SinOscillatorModule.hpp"
 #include "SlewModule.hpp"
 #include "StrikeModule.hpp"
@@ -96,6 +97,10 @@ const std::vector<ModuleInitSpec>& getModuleInitSpecs() {
       // NOT note-on — re-striking a ringing bank must not reset the ring-down).
       {modalBank1Address, &modalBankConstantsGroup, InitModalBankModule, DeinitModalBankModule,
        ProcessModalBankModule, nullptr, nullptr, ResetModalBankModule, SampleRateModalBankModule},
+      // Room: the space the object sits in. The MIDI slot catches note-ons, which retune the room
+      // to the struck pitch; Reset flushes it (voice allocation).
+      {room1Address, &roomConstantsGroup, InitRoomModule, DeinitRoomModule,
+       ProcessRoomModule, MIDIRoomModule, nullptr, ResetRoomModule, SampleRateRoomModule},
    };
    return specs;
 }

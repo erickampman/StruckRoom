@@ -45,6 +45,7 @@ public:
 
     void setMaterial(const ModalMaterial& m);
     void setFundamental(float hz);      // Hz — wrapper converts from PM pitch
+    float fundamental() const { return mFundamental; }
     void setModeCount(int n);           // clamped to material count and kMaxModes
     void setStretch(float s);           // inharmonicity: f_i = f0 * ratio^(1+s)
     void setDecayT60(float seconds);    // T60 of mode 0

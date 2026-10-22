@@ -1,13 +1,38 @@
 # StruckRoom
 
-A CLAP modal-synthesis instrument: Strike → ModalBank → Final on the vendored PolygraphModular engine
-(`src/Common`, `src/Module`, `src/Voice`), a hand-written CLAP entry point (`src/plugin.cpp`), and DPF
-used only for the GUI (`src/UI/`). Start with README.md and TESTING.md.
+A CLAP instrument that blurs a struck instrument and a reverb: Strike → ModalBank → **Room** → Final
+on the vendored PolygraphModular engine (`src/Common`, `src/Module`, `src/Voice`), a hand-written CLAP
+entry point (`src/plugin.cpp`), and DPF used only for the GUI (`src/UI/`). Start with README.md and
+TESTING.md.
+
+**Cloned from StruckSynth on 2026-10-22** (its history is this repo's history up to `ddae6d2`), then
+renamed: CLAP id `com.unlikelyware.struckroom`, AUv2 `aumu StRm nLKL`. Everything below about MIDI 2.0,
+MPE, CLAP and the wrappers came across from StruckSynth unchanged, and so do its known follow-ups.
+
+## The room (what is new here)
+
+`src/Module/Room.hpp/.cpp` is a framework-free core, like ModalBank; `RoomModule` wraps it. One per
+voice: a 2-D rectangular room whose lengths are in **wavelengths of the note**, so the whole scene
+transposes with the pitch. Direct path, four first-order reflections (one-pole wall absorption), four
+wall resonators (a ModalBank each), and up to 16384 room modes (standing waves), heard by a coincident
+M/S pair. It is tuned at each note-on, never per block: bends and glides move only the object.
+- Two stages: settings changes rebuild the mode list (throttled to 30 ms); a strike only recomputes
+  coefficients. A retune carries each ringing mode's amplitude and phase over; skipping that blows up
+  (a resonator's state read at a much lower frequency is a huge amplitude). Wall banks reset instead.
+- **Detail** (room modes up to N × f0) is the CPU control. Measured, Apple Silicon, 48 kHz, 64-sample
+  blocks, 4-note chord: Detail 12 (default) 16% of a core, worst strike block 0.44 ms; Detail 16 40%.
+- The 29 room and wall parameters have **no GUI panels yet** (the author's choice: host knobs first,
+  panels once we know which controls matter). `StruckRoomUI.cpp` skips every index from
+  `kParamRoomWidth` on. Spread became Width (the M/S side level); the bank itself runs at Spread 0.
+- `tools/roomlab/` is the offline renderer the room was ported from, with its README of findings.
+- `test/ss_room_test.cpp` fuzzes the core (random settings, every range corner) for non-finite or
+  runaway output. clap-validator's param-fuzz-bounds caught a 0/0 when source and mic share a wall.
 
 Sibling synths, on the same engine and the same raw-CLAP layout. Paths: `~/Dev-Audio/<name>` on the Mac,
 `~/dev/dev-clap/<name>` on the Linux PC (as `docs/BuildNotes.md` in IFSynth and StruckRoom shows):
+- **StruckSynth** (`~/Dev-Audio/StruckSynth`, branch `main`), this plugin without the room
 - **PlainOldSynth** (`~/Dev-Audio/PlainOldSynth`, branch `main`), where most MIDI 2.0 work starts
-- **IFSynth** (`~/Dev-Audio/IFSynth`, branch **`master`**), ported from this repo on 2026-10-12
+- **IFSynth** (`~/Dev-Audio/IFSynth`, branch **`master`**), ported from StruckSynth on 2026-10-12
 
 ## Working with the author
 

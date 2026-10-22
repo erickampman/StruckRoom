@@ -1,16 +1,56 @@
 # StruckRoom
 
-A cross-platform **CLAP modal-synthesis instrument** from Unlikelyware — a struck-resonator
-voice built on the PolygraphModular voice engine. Each note fires a shaped excitation burst
-into a bank of tuned resonant modes, so the sound is a struck object (bell, bar, tine, block)
-rather than an oscillator through a filter. Scaffolded from IFSynth, it carries the same
-vendored PolygraphModular engine and DPF/NanoVG UI kit.
+A cross-platform **CLAP instrument** from Unlikelyware that blurs the line between a struck
+instrument and a reverb. It is StruckSynth (a struck object: a shaped excitation burst into a bank
+of tuned resonant modes) placed inside a **room that scales with the note**. Every length in the
+room is measured in wavelengths of the note being played, so the object, the walls, where the
+object sits and the standing waves all transpose together, the way the object itself already did.
+
+## The room
+
+Each voice is **Strike → ModalBank (the object) → Room → Final**. The room is two-dimensional, with
+two wall pairs (side walls and front/back), and it is heard from one point by a coincident
+Mid/Side pair:
+
+- **Direct sound**, delayed by the distance from the object to the listener.
+- **Four first-order reflections**, one off each wall, filtered by that wall's absorption.
+- **Four wall resonators**: a wall can ring like a struck object of its own, struck where the
+  sound meets it.
+- **Room modes**, the standing waves: thousands of resonators at
+  f = f0/2 · √((nx/W)² + (ny/D)²). Where the object and listener sit decides which ones are driven
+  and heard (a mode is silent at its nodes, as Strike Pos does for the object). Their decay comes
+  from the walls' absorption.
+
+The room is tuned at each strike and then left alone: pitch bend and glide move the object, not the
+room.
+
+| Group | Parameters | Notes |
+|---|---|---|
+| Room | Room W, Room D | size in wavelengths (at note 60 when Room Track is below 1) |
+| | Room Track | 1: the room scales with the note; 0: a fixed physical room, so notes fit more wavelengths as they rise |
+| | Decay Track | 1: every T60 (object, walls, air) scales as 1/f0, so the whole scene transposes like tape speed; 0: decays stay in seconds |
+| | Air | the air's T60, which keeps a perfectly reflective room finite |
+| | Detail | room modes up to this multiple of f0: realism against CPU (default 12) |
+| Placement | Src X/Y, Mic X/Y | where the object and the listener sit, 0..1 of the room |
+| Mix | Direct, Early, Late | the object's own sound, the reflections, the standing waves. Direct 1, Early 0, Late 0 is plain StruckSynth |
+| Walls (Side, F/B) | Absorb, Bright | broadband absorption and the high-frequency corner (octaves above f0). They filter the reflections and set the room modes' decay |
+| | Ring, Mat, Ratio, Decay, Damp | the wall as a resonator: level (0 = doesn't ring), material, fundamental relative to the note, T60, damping tilt |
+| | Link | On: the wall rings with the energy it absorbed, not the full incident sound |
+| Global | Width | the M/S pair's side level (was Spread) |
+
+The room parameters are in the host's generic parameter view and automation for now; the custom
+editor still shows only the object's panels. `tools/roomlab/` is the offline renderer the room was
+prototyped in, with notes on what its first experiments showed.
+
+**CPU.** Every voice carries its own room, so voices are expensive: **Poly 4** is the default
+(Mono, Poly 10, 20 and 32 are still there). Measured on Apple Silicon at 48 kHz with 64-sample
+buffers, a 4-note chord costs about 16% of a core at Detail 12 and 40% at Detail 16.
 
 ## Status
 
-**Polyphonic struck-resonator synth with a full custom GUI.** The PM framework drives a
-`VoiceManager` (polyphony, note-stealing, mono/legato) rendering the voice
-**Strike → ModalBank → Final**, with pitch tracking via **PitchConverter → Slew** (glide) into
+**Polyphonic struck-resonator synth in a pitch-scaled room; the custom GUI covers the object.** The
+PM framework drives a `VoiceManager` (polyphony, note-stealing, mono/legato) rendering the voice
+**Strike → ModalBank → Room → Final**, with pitch tracking via **PitchConverter → Slew** (glide) into
 the bank's pitch input. There is no VCA envelope: the bank's own T60 decay is the amplitude
 envelope, and a voice frees itself once it rings down to silence, so the tail survives
 note-off.
@@ -21,7 +61,7 @@ note-off.
   note-on with velocity 0 is a note-on, as the spec says; Vel>Level decides how loud it is.
 - **ModalBank** (resonator): up to 64 modes, material presets, stretch, decay (T60), damping
   tilt + bell, strike position, brightness, stereo spread.
-- **Voices**: Poly 10, Poly 20, Poly 32, or Mono (legato, with glide).
+- **Voices**: Poly 4 (default), Poly 10, Poly 20, Poly 32, or Mono (legato, with glide).
 - **Presets**: factory presets in `Presets/*.json`, baked into the plugin at build time.
 
 MIDI notes are sample-accurate: `process()` splits rendering at each event's frame offset.

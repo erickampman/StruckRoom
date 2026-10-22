@@ -281,6 +281,47 @@ static const ModuleParamConstants modalBankConstants[] = {
    {"pitchMod2Level", ModalBankParamItemPitchMod2Level, 0, 0, nullptr, -5.0f, 5.0f, 1.0f, 0},
    {"dampTiltModInput", ModalBankParamItemDampTiltModInput, 0, 0, nullptr, 0.0f, 0.0f, 0.0f, 0}, // connection
    {"dampTiltModLevel", ModalBankParamItemDampTiltModLevel, 0, 0, nullptr, -3.0f, 3.0f, 0.0f, 0},
+   {"decayTrack",     ModalBankParamItemDecayTrack,     0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
 };
 const ModuleParamConstantsGroup modalBankConstantsGroup = {
    const_cast<char*>("modalBank"), sizeof(modalBankConstants) / sizeof(modalBankConstants[0]), modalBankConstants};
+
+// Room — the pitch-scaled 2-D room. Defaults match Room::Settings (Room.hpp). Items 1-2 are
+// connection ports.
+static const ModuleParamConstants roomConstants[] = {
+   {"input",        RoomParamItemInput,         0, 0, nullptr, 0.0f, 0.0f, 0.0f, 0}, // connection
+   {"pitchInput",   RoomParamItemPitchInput,    0, 0, nullptr, 0.0f, 0.0f, 0.0f, 0}, // connection
+   {"pitch",        RoomParamItemPitch,         0, 0, nullptr, -4.0f, 4.0f, 0.0f, 0},
+   {"width",        RoomParamItemWidth,         0, 0, nullptr, 0.25f, 16.0f, 3.0f, 0},
+   {"depth",        RoomParamItemDepth,         0, 0, nullptr, 0.25f, 16.0f, 2.2f, 0},
+   {"roomTrack",    RoomParamItemRoomTrack,     0, 0, nullptr, 0.0f, 1.0f, 1.0f, 0},
+   {"decayTrack",   RoomParamItemDecayTrack,    0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"air",          RoomParamItemAir,           0, 0, nullptr, 0.5f, 30.0f, 12.0f, 0},
+   {"detail",       RoomParamItemDetail,        0, 0, nullptr, 2.0f, 64.0f, 12.0f, 0},
+   {"srcX",         RoomParamItemSrcX,          0, 0, nullptr, 0.0f, 1.0f, 0.31f, 0},
+   {"srcY",         RoomParamItemSrcY,          0, 0, nullptr, 0.0f, 1.0f, 0.37f, 0},
+   {"micX",         RoomParamItemMicX,          0, 0, nullptr, 0.0f, 1.0f, 0.62f, 0},
+   {"micY",         RoomParamItemMicY,          0, 0, nullptr, 0.0f, 1.0f, 0.71f, 0},
+   {"micWidth",     RoomParamItemMicWidth,      0, 0, nullptr, 0.0f, 1.0f, 1.0f, 0},
+   {"direct",       RoomParamItemDirect,        0, 0, nullptr, 0.0f, 2.0f, 1.0f, 0},
+   {"early",        RoomParamItemEarly,         0, 0, nullptr, 0.0f, 2.0f, 1.0f, 0},
+   {"late",         RoomParamItemLate,          0, 0, nullptr, 0.0f, 2.0f, 1.0f, 0},
+   {"sideAbsorb",   RoomParamItemSideAbsorb,    0, 0, nullptr, 0.0f, 1.0f, 0.15f, 0},
+   {"sideBright",   RoomParamItemSideBright,    0, 0, nullptr, 0.0f, 8.0f, 5.0f, 0},
+   {"sideRing",     RoomParamItemSideRing,      0, 0, nullptr, 0.0f, 2.0f, 0.0f, 0},
+   {"sideRingMat",  RoomParamItemSideRingMat,   0, 0, nullptr, 0.0f, 11.0f, 3.0f, 0},
+   {"sideRingRatio",RoomParamItemSideRingRatio, 0, 0, nullptr, 0.0625f, 4.0f, 0.5f, 0},
+   {"sideRingT60",  RoomParamItemSideRingT60,   0, 0, nullptr, 0.05f, 20.0f, 1.5f, 0},
+   {"sideRingTilt", RoomParamItemSideRingTilt,  0, 0, nullptr, 0.0f, 3.0f, 1.0f, 0},
+   {"sideLink",     RoomParamItemSideLink,      0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"fbAbsorb",     RoomParamItemFBAbsorb,      0, 0, nullptr, 0.0f, 1.0f, 0.15f, 0},
+   {"fbBright",     RoomParamItemFBBright,      0, 0, nullptr, 0.0f, 8.0f, 5.0f, 0},
+   {"fbRing",       RoomParamItemFBRing,        0, 0, nullptr, 0.0f, 2.0f, 0.0f, 0},
+   {"fbRingMat",    RoomParamItemFBRingMat,     0, 0, nullptr, 0.0f, 11.0f, 3.0f, 0},
+   {"fbRingRatio",  RoomParamItemFBRingRatio,   0, 0, nullptr, 0.0625f, 4.0f, 0.5f, 0},
+   {"fbRingT60",    RoomParamItemFBRingT60,     0, 0, nullptr, 0.05f, 20.0f, 1.5f, 0},
+   {"fbRingTilt",   RoomParamItemFBRingTilt,    0, 0, nullptr, 0.0f, 3.0f, 1.0f, 0},
+   {"fbLink",       RoomParamItemFBLink,        0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+};
+const ModuleParamConstantsGroup roomConstantsGroup = {
+   const_cast<char*>("room"), sizeof(roomConstants) / sizeof(roomConstants[0]), roomConstants};

@@ -151,6 +151,14 @@ inline constexpr AUParameterAddress modalBank1DampTiltModInputAddress =
 inline constexpr AUParameterAddress modalBank1StrikeModInputAddress =
    MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, ModalBankParamItemStrikeInput);
 
+// --- StruckRoom: Room (ModalBank -> Room -> Final) --------------------------------------------
+inline constexpr AUParameterAddress room1Address =
+   MODULE_PARAM_ADDRESS(ModuleParamKindRoom, ModuleInstance1, 0);
+inline constexpr AUParameterAddress room1InputAddress =
+   MODULE_PARAM_ADDRESS(ModuleParamKindRoom, ModuleInstance1, RoomParamItemInput);
+inline constexpr AUParameterAddress room1PitchInputAddress =
+   MODULE_PARAM_ADDRESS(ModuleParamKindRoom, ModuleInstance1, RoomParamItemPitchInput);
+
 // --- Pressure and Timbre sources (per voice) -----------------------------------------------
 inline constexpr AUParameterAddress channelPressure1Address =
    MODULE_PARAM_ADDRESS(ModuleParamKindChannelPressure, ModuleInstance1, 0);

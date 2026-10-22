@@ -10,7 +10,7 @@
         "voiceMode": "1",
         "glide": "0.010000",
         "level": "0.550000",
-        "spread": "0.350000"
+        "spread": "1.000000"
       },
       "Strike": {
         "type": "0",
@@ -36,6 +36,45 @@
         "pressToDecay": "0.000000",
         "timbreToTilt": "0.000000",
         "timbreToPos": "0.000000"
+      },
+      "Room": {
+        "width": "3.000000",
+        "depth": "2.200000",
+        "roomTrack": "1.000000",
+        "decayTrack": "0.000000",
+        "air": "12.000000",
+        "detail": "12.000000"
+      },
+      "Placement": {
+        "srcX": "0.310000",
+        "srcY": "0.370000",
+        "micX": "0.620000",
+        "micY": "0.710000"
+      },
+      "Mix": {
+        "direct": "1.000000",
+        "early": "1.000000",
+        "late": "1.000000"
+      },
+      "SideWalls": {
+        "absorb": "0.150000",
+        "bright": "5.000000",
+        "ring": "0.000000",
+        "ringMaterial": "3",
+        "ringRatio": "0.500000",
+        "ringDecay": "1.500000",
+        "ringDamp": "1.000000",
+        "link": "0"
+      },
+      "FrontBackWalls": {
+        "absorb": "0.150000",
+        "bright": "5.000000",
+        "ring": "0.000000",
+        "ringMaterial": "3",
+        "ringRatio": "0.500000",
+        "ringDecay": "1.500000",
+        "ringDamp": "1.000000",
+        "link": "0"
       }
     }
   }

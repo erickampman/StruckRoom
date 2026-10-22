@@ -1,5 +1,16 @@
 # StruckRoom milestones
 
+Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited with its history.
+
+## M5: The room
+- [x] roomlab offline renderer and four experiments (tools/roomlab)
+- [x] Room core + RoomModule per voice: direct, 4 reflections, 4 wall resonators, room modes, M/S pair
+- [x] 29 host parameters (room, placement, mix, two wall pairs), presets, Poly 4 default, Width = M/S side
+- [x] ss-room fuzz test; ctest 13/13; clap-validator 35 pass, 0 fail
+- [ ] By hand: play it in a host and decide which controls matter
+- [ ] GUI panels for the room (after the above)
+- [ ] Rename leftovers: help page still describes StruckSynth
+
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
 

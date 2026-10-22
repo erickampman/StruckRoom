@@ -47,6 +47,8 @@ add_library(pm_framework STATIC
     src/Module/PitchConverterModule.cpp
     src/Module/ModalBankModule.cpp
     src/Module/ModalBank.cpp
+    src/Module/Room.cpp
+    src/Module/RoomModule.cpp
     src/Module/StrikeModule.cpp
     src/Module/ModuleFactory.cpp
     src/Voice/ModuleMap.cpp
@@ -60,6 +62,9 @@ set_target_properties(pm_framework PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(pm_framework PUBLIC src/Common src/Module src/Voice)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     target_compile_options(pm_framework PRIVATE -Wall -Wno-unknown-pragmas -Wno-unused-parameter)
+    # The room-mode loop sums thousands of resonators per sample; -ffast-math lets it vectorise
+    # those two sums (reassociation). Room.cpp alone: nothing else needs it.
+    set_source_files_properties(src/Module/Room.cpp PROPERTIES COMPILE_OPTIONS "-ffast-math")
 endif()
 
 # --- presets: Presets/*.json compiled in as a C++ array, not loaded at runtime -------------
@@ -344,6 +349,9 @@ target_link_libraries(pm-modroute-test PRIVATE pm_framework)
 add_executable(pm-voicemanager-test test/pm_voicemanager_test.cpp)
 target_link_libraries(pm-voicemanager-test PRIVATE pm_framework)
 
+add_executable(ss-room-test test/ss_room_test.cpp)
+target_link_libraries(ss-room-test PRIVATE pm_framework)
+
 add_executable(ss-bend-test test/ss_bend_test.cpp)
 target_link_libraries(ss-bend-test PRIVATE pm_framework)
 target_include_directories(ss-bend-test PRIVATE external/clap/include)   # clap_ump.h
@@ -392,6 +400,8 @@ set_tests_properties(pm-modroute PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 add_test(NAME pm-voicemanager COMMAND pm-voicemanager-test)
 set_tests_properties(pm-voicemanager PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 
+add_test(NAME ss-room COMMAND ss-room-test)
+set_tests_properties(ss-room PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 add_test(NAME ss-bend COMMAND ss-bend-test)
 set_tests_properties(ss-bend PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 

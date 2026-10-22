@@ -44,6 +44,8 @@ void VoiceManager::initializeVoices(PitchConverter *pitchConverter)
     // controller #74 (and CLAP Brightness) per note. Fixed, so it is part of the patch, not a param.
     setParameter(MODULE_PARAM_FROM_BASE_AND_ITEM(timbre1Address, CCParamItemNumber), float(pm::kRegPerNoteBrightness));
     setParameter(MODULE_PARAM_FROM_BASE_AND_ITEM(timbre1Address, CCParamItemPerNote), 1.0f);
+    // The bank plays mono into the Room, whose M/S pair makes the stereo.
+    setParameter(MODULE_PARAM_FROM_BASE_AND_ITEM(modalBank1Address, ModalBankParamItemSpread), 0.0f);
 }
 
 void VoiceManager::reset() {
@@ -71,13 +73,17 @@ void VoiceManager::buildDefaultPatch(Voice& voice)
     Module* strikeModule         = voice.getModule(strike1Address);
     Module* modalBankModule      = voice.getModule(modalBank1Address);
     Module* finalModule          = voice.getModule(finalAddress);
+    Module* roomModule           = voice.getModule(room1Address);
     Module* pitchBendModule      = voice.getModule(pitchBend1Address);
     Module* pressureModule       = voice.getModule(channelPressure1Address);
     Module* timbreModule         = voice.getModule(timbre1Address);
 
     //                       upstream            -> downstream      (downstream input port)
     ++(finalModule->activeCount);
-    voice.connectModules(modalBankModule,      finalModule,     finalInputAddress);
+    // ModalBank -> Room -> Final: the object's sound plays into the room, which is what we hear.
+    voice.connectModules(modalBankModule,      roomModule,      room1InputAddress);
+    voice.connectModules(roomModule,           finalModule,     finalInputAddress);
+    voice.connectModules(slewModule,           roomModule,      room1PitchInputAddress);
     // Strike excites the bank. connectModules bumps Strike's activeCount, so it receives the
     // MIDI note-on (velocity -> strike strength) that ModalBank itself does not handle.
     voice.connectModules(strikeModule,         modalBankModule, modalBank1InputAddress);
