@@ -38,7 +38,7 @@
 // i3-9100 at Detail 21, 205% of a core on the baseline against 41% with AVX2. Building the whole
 // plugin for AVX2 would make it crash on older CPUs instead. Elsewhere this is empty: ARM has
 // NEON throughout, and macOS has no ifunc for the loader to choose with. It goes on the
-// declarations below because clang only accepts it on a function's first declaration.
+// declarations below and on the definitions in Room.cpp: clang wants it on every declaration.
 #if defined(__x86_64__) && defined(__linux__)
 #define ROOM_HOT __attribute__((target_clones("arch=x86-64-v3", "default")))
 #else

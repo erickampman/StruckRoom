@@ -219,7 +219,7 @@ void Room::rebuildGeometry() {
 // ---------------------------------------------------------------------------
 // Stage 2: the pitch. Cheap, so it runs on every strike.
 // ---------------------------------------------------------------------------
-void Room::retunePitch() {
+ROOM_HOT void Room::retunePitch() {
     const Settings& s = mSettings;
     const double fs = mSampleRate;
     const double f0 = mFundamental;
@@ -384,7 +384,7 @@ void Room::processBlock(const float* in, float* outL, float* outR, int n) {
     }
 }
 
-void Room::processChunk(const float* in, float* outL, float* outR, int n) {
+ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int n) {
     constexpr uint32_t mask = kDelaySize - 1;
     float mid[kMaxBlock], side[kMaxBlock], late[kMaxBlock];
     float ringIn[4][kMaxBlock];
