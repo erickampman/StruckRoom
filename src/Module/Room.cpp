@@ -12,18 +12,6 @@
 #include <cstdint>
 #include <cstring>
 
-// The two hot loops (the strike retune and the mode loop) are built twice on x86-64 Linux, for
-// AVX2 + FMA and for the baseline, and the loader picks one per CPU. The baseline has only 16
-// 4-wide registers, so the mode loop's 8-wide vectors spill on every sample: measured on an
-// i3-9100 at Detail 21, 205% of a core on the baseline against 41% with AVX2. Building the whole
-// plugin for AVX2 would make it crash on older CPUs instead. Elsewhere this is empty: ARM has
-// NEON throughout, and macOS has no ifunc for the loader to choose with.
-#if defined(__x86_64__) && defined(__linux__)
-#define ROOM_HOT __attribute__((target_clones("arch=x86-64-v3", "default")))
-#else
-#define ROOM_HOT
-#endif
-
 namespace {
 
 constexpr double kLn1e6  = 13.815510557964274;   // 60 dB, in energy
@@ -231,7 +219,7 @@ void Room::rebuildGeometry() {
 // ---------------------------------------------------------------------------
 // Stage 2: the pitch. Cheap, so it runs on every strike.
 // ---------------------------------------------------------------------------
-ROOM_HOT void Room::retunePitch() {
+void Room::retunePitch() {
     const Settings& s = mSettings;
     const double fs = mSampleRate;
     const double f0 = mFundamental;
@@ -396,7 +384,7 @@ void Room::processBlock(const float* in, float* outL, float* outR, int n) {
     }
 }
 
-ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int n) {
+void Room::processChunk(const float* in, float* outL, float* outR, int n) {
     constexpr uint32_t mask = kDelaySize - 1;
     float mid[kMaxBlock], side[kMaxBlock], late[kMaxBlock];
     float ringIn[4][kMaxBlock];

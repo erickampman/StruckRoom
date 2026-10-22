@@ -32,6 +32,19 @@
 
 #include <cstdint>
 
+// The two hot loops (retunePitch and processChunk) are built twice on x86-64 Linux, for
+// AVX2 + FMA and for the baseline, and the loader picks one per CPU. The baseline has only 16
+// 4-wide registers, so the mode loop's 8-wide vectors spill on every sample: measured on an
+// i3-9100 at Detail 21, 205% of a core on the baseline against 41% with AVX2. Building the whole
+// plugin for AVX2 would make it crash on older CPUs instead. Elsewhere this is empty: ARM has
+// NEON throughout, and macOS has no ifunc for the loader to choose with. It goes on the
+// declarations below because clang only accepts it on a function's first declaration.
+#if defined(__x86_64__) && defined(__linux__)
+#define ROOM_HOT __attribute__((target_clones("arch=x86-64-v3", "default")))
+#else
+#define ROOM_HOT
+#endif
+
 class Room {
 public:
     static constexpr int kMaxModes = 16384;
@@ -82,8 +95,8 @@ public:
 
 private:
     void rebuildGeometry();      // mode list, gains, losses: on settings change
-    void retunePitch();          // coefficients and paths for mFundamental: on strike
-    void processChunk(const float* in, float* outL, float* outR, int n);
+    ROOM_HOT void retunePitch();          // coefficients and paths for mFundamental: on strike
+    ROOM_HOT void processChunk(const float* in, float* outL, float* outR, int n);
 
     // --- room modes, structure of arrays, padded to a multiple of 16 --------------
     alignas(32) float mA1[kMaxModes], mA2[kMaxModes], mB[kMaxModes];
