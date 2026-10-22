@@ -129,8 +129,9 @@ retune were built twice (`ROOM_HOT` in `Room.cpp`, `target_clones` for x86-64-v3
 baseline): plain x86-64 has 16 SSE registers and the loop's 8-wide vectors spilled every sample.
 Same scene as the M4 figures, before → after: Detail 12 69% → 15% of a core, 21 205% → 42%,
 32 349% → 71%. The first strike after a room setting changes still overruns one block (2.2 ms at
-Detail 12, 11.7 ms at 32): that is the mode-list rebuild. The `-Wpsabi` warning on Room.cpp comes
-from the baseline clone and is harmless.
+Detail 12, 11.7 ms at 32): that is the mode-list rebuild. Under clang, `ROOM_HOT` goes on every
+declaration (header and definition), and no plain function in the clones may return a `v8` by value
+(an AVX ABI change in the baseline clone: gcc warns, clang rejects it).
 
 macOS-only pieces: `src/UI/BackingScale_mac.mm` (Retina scale; built only on Apple).
 
