@@ -1,7 +1,11 @@
-// StruckRoomUI.cpp — the modal-synthesis front end. Five grouped panels (Global, Strike, Object,
-// Decay, Timbre/Output) of reusable Knob/Dropdown controls, plus a live ModalSpectrum visual that
-// drives the real framework-free ModalBank core (linked via pm_framework) to draw the current
-// mode layout and per-mode decay. No presets / IFS pads / mod-matrix — this is the v1 modal voice.
+// StruckRoomUI.cpp — the front end, in three tabs chosen in the header:
+//   Object: the struck object, as StruckSynth had it. Six grouped panels (Global, Strike, Object,
+//           Decay, Timbre, Expression) of reusable Knob/Dropdown controls, plus a live ModalSpectrum
+//           that drives the real framework-free ModalBank core to draw the mode layout and decay.
+//   Room:   a RoomMap (top-down, drag the object and the listener) beside the Room, Placement and
+//           Mix panels.
+//   Walls:  the two wall pairs side by side, over a RoomDecay view of every room mode's T60.
+// Every tab's widgets exist all the time; switching tabs only shows and hides them.
 
 #include "DistrhoUI.hpp"
 
@@ -26,6 +30,8 @@
 #include "Knob.hpp"
 #include "Logo.hpp"
 #include "PopupMenu.hpp"
+#include "RoomMap.hpp"
+#include "TabBar.hpp"
 #include "PresetKeys.hpp"         // param -> preset-JSON key map, shared with the dumper
 #include "PresetDump.hpp"         // dev-only JSON patch dumper (no-op unless STRUCKROOM_PRESET_DUMP=1)
 
@@ -48,6 +54,8 @@ using DGL_NAMESPACE::HelpButton;
 using DGL_NAMESPACE::Knob;
 using DGL_NAMESPACE::Logo;
 using DGL_NAMESPACE::PopupMenu;
+using DGL_NAMESPACE::RoomMap;
+using DGL_NAMESPACE::TabBar;
 
 // Category accent palette (struck-instrument scheme): global=steel, strike=amber, object=green,
 // decay=violet, output=copper. Reused for panels, knobs, and the spectrum.
@@ -57,6 +65,12 @@ static inline Color colObject() { return Color(120, 190, 140); }
 static inline Color colDecay()  { return Color(168, 140, 214); }
 static inline Color colOutput() { return Color(214, 132, 96);  }
 static inline Color colExpression() { return Color(96, 186, 196); }
+// The room tabs: room=blue, placement=sand, mix=rose, and one colour per wall pair.
+static inline Color colRoom()      { return Color(110, 170, 220); }
+static inline Color colPlacement() { return Color(222, 200, 128); }
+static inline Color colMix()       { return Color(204, 146, 176); }
+static inline Color colSideWalls() { return Color(226, 120, 110); }
+static inline Color colFBWalls()   { return Color(120, 200, 170); }
 
 // --------------------------------------------------------------------------------------------
 // ModalSpectrum — draws the current bank as vertical bars: x = mode frequency (log), height =
@@ -186,10 +200,132 @@ private:
 };
 
 // --------------------------------------------------------------------------------------------
+// RoomDecay — every room mode's decay against its frequency, at C4: x = frequency (log, from a
+// quarter of the note to the Detail limit), y = T60. The same formula as Room::rebuildGeometry /
+// retunePitch, so it shows what the engine will do: absorption and the HF corner pull the cloud
+// down, Air caps it. Each dot is coloured by the wall pair its plane waves mostly hit, so the two
+// pairs' shares are visible. Marks along the bottom show where a ringing wall's fundamental sits.
+class RoomDecay : public NanoSubWidget
+{
+public:
+    struct WallView { float absorb, bright, ring, ratio; };
+
+    explicit RoomDecay(Widget* parent) : NanoSubWidget(parent) { fHasFont = loadSharedResources(); }
+
+    void setUiScale(float s) { fUiScale = s; }
+
+    void update(float width, float depth, float air, float detail, WallView side, WallView frontBack)
+    {
+        fWall[0] = side; fWall[1] = frontBack;
+        fCount = 0; fMaxT60 = 0.1f;
+        fDetail = std::max(2.0f, detail);
+        const double W = std::max(0.05f, width), D = std::max(0.05f, depth);
+        // Thin a dense room to at most ~kMaxDots dots: step through (nx, ny) on a coarser grid.
+        const double total = M_PI * W * D * fDetail * fDetail;
+        const int step = std::max(1, (int)std::ceil(std::sqrt(total / kMaxDots)));
+        const double airRate = 13.815510557964274 / std::max(0.1f, air);
+        auto loss = [](const WallView& w, double q) {
+            const double a = std::clamp((double)w.absorb, 0.0, 0.999);
+            const double fc = std::exp2((double)w.bright);
+            return -std::log(1.0 - a) + std::log1p((q / fc) * (q / fc));
+        };
+        for (int nx = 0; nx <= (int)(2.0 * W * fDetail) && fCount < kMaxDots; nx += step)
+            for (int ny = 0; ny <= (int)(2.0 * D * fDetail) && fCount < kMaxDots; ny += step)
+            {
+                if (nx == 0 && ny == 0) continue;
+                const double kx = nx / W, ky = ny / D, kk = std::hypot(kx, ky), q = 0.5 * kk;
+                if (q > fDetail) continue;
+                const double cx = kx / kk, cy = ky / kk;
+                const double rate = kF0 * ((cx / W) * loss(fWall[0], q) + (cy / D) * loss(fWall[1], q)) + airRate;
+                fQ[fCount]    = (float)q;
+                fT60[fCount]  = (float)(13.815510557964274 / rate);
+                fSide[fCount] = (float)(cx * cx);   // share of the side walls, 0..1
+                fMaxT60 = std::max(fMaxT60, fT60[fCount]);
+                ++fCount;
+            }
+        repaint();
+    }
+
+protected:
+    void onNanoDisplay() override
+    {
+        const float w = getWidth(), h = getHeight(), s = fUiScale;
+        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(42, 34, 26)); fill();
+        beginPath(); roundedRect(0.5f, 0.5f, w - 1, h - 1, 6);
+        strokeColor(Color(74, 62, 48)); strokeWidth(1.0f); stroke();
+
+        const float x0 = 44 * s, x1 = w - 12 * s, yTop = 24 * s, y1 = h - 20 * s;
+        if (x1 <= x0 || y1 <= yTop) return;
+        const float qLo = std::log2(0.25f), qHi = std::log2(fDetail);
+        auto px = [&](float q) { return x0 + (std::log2(std::max(q, 0.25f)) - qLo) / (qHi - qLo) * (x1 - x0); };
+        auto py = [&](float t) { return y1 - std::min(t / fMaxT60, 1.0f) * (y1 - yTop); };
+
+        // Harmonics of the note, for orientation.
+        beginPath();
+        for (int n = 1; n <= (int)fDetail; n *= 2) { moveTo(px((float)n), yTop); lineTo(px((float)n), y1); }
+        strokeColor(Color(66, 56, 44)); strokeWidth(1.0f); stroke();
+
+        const Color side = colSideWalls(), fb = colFBWalls();
+        for (int i = 0; i < fCount; ++i)
+        {
+            const float a = fSide[i];
+            Color c((int)(side.red * 255 * a + fb.red * 255 * (1 - a)),
+                    (int)(side.green * 255 * a + fb.green * 255 * (1 - a)),
+                    (int)(side.blue * 255 * a + fb.blue * 255 * (1 - a)));
+            c.alpha = 0.75f;
+            beginPath(); rect(px(fQ[i]) - 1.0f, py(fT60[i]) - 1.0f, 2.0f, 2.0f); fillColor(c); fill();
+        }
+
+        // Ringing walls: a mark at each wall pair's fundamental.
+        for (int p = 0; p < 2; ++p)
+        {
+            if (fWall[p].ring <= 0.0f) continue;
+            const float x = px(fWall[p].ratio);
+            beginPath(); moveTo(x - 5 * s, y1 + 9 * s); lineTo(x + 5 * s, y1 + 9 * s); lineTo(x, y1 + 2 * s); closePath();
+            fillColor(p == 0 ? side : fb); fill();
+        }
+
+        if (fHasFont)
+        {
+            fontFace(NANOVG_DEJAVU_SANS_TTF);
+            fontSize(11.0f * s);
+            fillColor(Color(150, 154, 162));
+            textAlign(ALIGN_LEFT | ALIGN_TOP);
+            text(10 * s, 6 * s, "Room decay vs frequency, at C4", nullptr);
+            char buf[32];
+            std::snprintf(buf, sizeof(buf), "%.1f s", fMaxT60);
+            textAlign(ALIGN_RIGHT | ALIGN_MIDDLE);
+            text(x0 - 6 * s, yTop, buf, nullptr);
+            text(x0 - 6 * s, y1, "0", nullptr);
+            textAlign(ALIGN_CENTER | ALIGN_TOP);
+            for (int n = 1; n <= (int)fDetail; n *= 2)
+            {
+                std::snprintf(buf, sizeof(buf), n == 1 ? "f0" : "%dx", n);
+                text(px((float)n), y1 + 3 * s, buf, nullptr);
+            }
+        }
+    }
+
+private:
+    static constexpr int    kMaxDots = 4000;
+    static constexpr double kF0 = 261.6255653005986;   // C4: where the "at note 60" values apply
+
+    WallView fWall[2] {};
+    float fQ[kMaxDots] = {}, fT60[kMaxDots] = {}, fSide[kMaxDots] = {};
+    int   fCount = 0;
+    float fMaxT60 = 1.0f, fDetail = 12.0f, fUiScale = 1.0f;
+    bool  fHasFont = false;
+
+    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RoomDecay)
+};
+
+// --------------------------------------------------------------------------------------------
 class StruckRoomUI : public UI,
                       public Knob::Callback,
                       public Dropdown::Callback,
-                      public PopupMenu::Callback
+                      public PopupMenu::Callback,
+                      public RoomMap::Callback,
+                      public TabBar::Callback
 {
 public:
     StruckRoomUI()
@@ -207,7 +343,10 @@ public:
             fValues[i] = fPlugin != nullptr ? static_cast<float>(ss_param_value(fPlugin, i))
                                             : kParams[i].def;
 
-        fSpectrum = std::make_unique<ModalSpectrum>(this);
+        fSpectrum  = std::make_unique<ModalSpectrum>(this);
+        fRoomMap   = std::make_unique<RoomMap>(this, this);
+        fRoomMap->setColors(colObject(), Color(230, 230, 236), colSideWalls(), colFBWalls());
+        fRoomDecay = std::make_unique<RoomDecay>(this);
         fLogo = std::make_unique<Logo>(this, EmbeddedResources::Unlikelyware_Final_ColorData,
                                        EmbeddedResources::Unlikelyware_Final_ColorDataSize);
 
@@ -217,12 +356,17 @@ public:
         fDecayGroup  = makeGroup("Decay",  colDecay());
         fOutputGroup = makeGroup("Timbre", colOutput());
         fExpressionGroup = makeGroup("Expression", colExpression());
+        fRoomGroup       = makeGroup("Room",              colRoom());
+        fPlaceGroup      = makeGroup("Placement",         colPlacement());
+        fMixGroup        = makeGroup("Mix",               colMix());
+        fSideGroup       = makeGroup("Side walls",        colSideWalls());
+        fFBGroup         = makeGroup("Front / back walls", colFBWalls());
+        fSideGroup->setColumns(4);   // eight controls each: two rows of four
+        fFBGroup->setColumns(4);
 
-        // Build each param control into its panel, in panel order. The Room and Walls params have no
-        // panel yet: they live in the host's own parameter view until we know which ones matter.
+        // Build each param control into its panel, in panel order.
         for (uint32_t i = 0; i < kParamCount; ++i)
         {
-            if (i >= kParamRoomWidth) continue;
             GroupBox* g = groupFor(i);
             if (isDropdownParam(i))
             {
@@ -249,6 +393,10 @@ public:
             }
         }
 
+        fTabBar = std::make_unique<TabBar>(this, this);
+        fTabBar->setTabs({ "Object", "Room", "Walls" });
+        fTabBar->setAccentColor(Color(224, 190, 150));
+
         // Preset selector: applies to the whole patch, so it's parented to the UI (like fMenu)
         // and sits in the header strip, not in a GroupBox. Shares the generic Dropdown/PopupMenu
         // plumbing every other dropdown uses; menuSelected() tells it apart via kPresetDropdownId.
@@ -274,6 +422,8 @@ public:
         fMenu = std::make_unique<PopupMenu>(this, this); // created last → draws on top
 
         pushSpectrum();
+        pushRoomViews();
+        showTab(0);
         layout();
     }
 
@@ -286,6 +436,7 @@ protected:
         if (fKnobs[index])     { fKnobs[index]->setRealValue(value, false); fKnobs[index]->repaint(); }
         if (fDropdowns[index])   fDropdowns[index]->setIndex(static_cast<int>(value + 0.5f));
         if (affectsSpectrum(index)) pushSpectrum();
+        if (affectsRoomViews(index)) pushRoomViews();
     }
 
     /* -- knob -> host ----------------------------------------------------- */
@@ -297,6 +448,52 @@ protected:
         fValues[id] = v;
         setParameterValue(id, v);
         if (affectsSpectrum(id)) pushSpectrum();
+        if (affectsRoomViews(id)) pushRoomViews();
+    }
+
+    /* -- room map -> host: the markers are Src X/Y and Mic X/Y ------------- */
+    static uint32_t markerX(int marker) { return marker == RoomMap::kObject ? kParamSrcX : kParamMicX; }
+    static uint32_t markerY(int marker) { return marker == RoomMap::kObject ? kParamSrcY : kParamMicY; }
+    void roomMapDragStarted(int marker) override
+    {
+        editParameter(markerX(marker), true);
+        editParameter(markerY(marker), true);
+    }
+    void roomMapMoved(int marker, float x, float y) override
+    {
+        for (const auto& [id, v] : { std::pair{markerX(marker), x}, std::pair{markerY(marker), y} })
+        {
+            fValues[id] = v;
+            setParameterValue(id, v);
+            if (fKnobs[id]) { fKnobs[id]->setRealValue(v, false); fKnobs[id]->repaint(); }
+        }
+    }
+    void roomMapDragFinished(int marker) override
+    {
+        editParameter(markerX(marker), false);
+        editParameter(markerY(marker), false);
+    }
+
+    /* -- tabs -------------------------------------------------------------- */
+    void tabSelected(TabBar*, int index) override { showTab(index); }
+
+    void showTab(int index)
+    {
+        fTab = index;
+        if (fMenu) fMenu->dismiss();
+        const bool object = index == 0, room = index == 1, walls = index == 2;
+        for (SubWidget* w : std::initializer_list<SubWidget*>{
+                 fSpectrum.get(), fGlobalGroup.get(), fStrikeGroup.get(), fObjectGroup.get(),
+                 fDecayGroup.get(), fOutputGroup.get(), fExpressionGroup.get() })
+            w->setVisible(object);
+        for (SubWidget* w : std::initializer_list<SubWidget*>{
+                 fRoomMap.get(), fRoomGroup.get(), fPlaceGroup.get(), fMixGroup.get() })
+            w->setVisible(room);
+        for (SubWidget* w : std::initializer_list<SubWidget*>{
+                 fSideGroup.get(), fFBGroup.get(), fRoomDecay.get() })
+            w->setVisible(walls);
+        if (fTabBar) fTabBar->setActive(index);
+        repaint();
     }
 
     /* -- dropdown + menu -------------------------------------------------- */
@@ -328,6 +525,7 @@ protected:
         fValues[id] = static_cast<float>(index);
         if (fDropdowns[id]) fDropdowns[id]->setIndex(index);
         if (affectsSpectrum(id)) pushSpectrum();
+        if (affectsRoomViews(id)) pushRoomViews();
     }
 
     // Apply every param the selected preset has a value for (looked up by "module.item" key via
@@ -373,7 +571,7 @@ protected:
             fillColor(Color(224, 190, 150));
             text(fTitleX, 20 * s, "StruckRoom", nullptr);
             fillColor(Color(150, 154, 162)); fontSize(12 * s);
-            text(fTitleX + 132 * s, 22 * s, "modal synthesis", nullptr);
+            text(fTitleX + 132 * s, 22 * s, "struck, in a room", nullptr);
         }
     }
     void onResize(const ResizeEvent& ev) override { UI::onResize(ev); layout(); }
@@ -462,9 +660,16 @@ private:
                 done = right;
             }
         };
-        GroupBox* panels[6] = { fGlobalGroup.get(), fStrikeGroup.get(), fObjectGroup.get(),
-                                fDecayGroup.get(), fOutputGroup.get(), fExpressionGroup.get() };
+        GroupBox* panels[11] = { fGlobalGroup.get(), fStrikeGroup.get(), fObjectGroup.get(),
+                                 fDecayGroup.get(), fOutputGroup.get(), fExpressionGroup.get(),
+                                 fRoomGroup.get(), fPlaceGroup.get(), fMixGroup.get(),
+                                 fSideGroup.get(), fFBGroup.get() };
         for (GroupBox* g : panels) g->setUiScale(s);
+
+        // Tabs, centred in the header between the title and Help.
+        const int tabW = static_cast<int>(300 * s), tabH = static_cast<int>(28 * s);
+        fTabBar->setSize(static_cast<uint>(tabW), static_cast<uint>(tabH));
+        fTabBar->setAbsolutePos((W - tabW) / 2, static_cast<int>(12 * s));
 
         // The spectrum holds no controls; it reads fine at about three control cells wide.
         constexpr int kSpectrumCells = 3;
@@ -474,6 +679,32 @@ private:
         placeRow({ { fGlobalGroup.get(), cells(fGlobalGroup.get()) },
                    { fOutputGroup.get(), cells(fOutputGroup.get()) },
                    { fExpressionGroup.get(), cells(fExpressionGroup.get()) } }, row2);
+
+        // Room tab: the map takes the left part at full height; Room, Placement and Mix stack on the
+        // right, one per row, so their knobs match the Object tab's.
+        const int mapW = (W - 2 * M - gap) * 44 / 100;
+        fRoomMap->setUiScale(s);
+        fRoomMap->setAbsolutePos(M, row0);
+        fRoomMap->setSize(static_cast<uint>(mapW), static_cast<uint>(gridH));
+        const int colX = M + mapW + gap, colW = W - M - colX;
+        int y = row0;
+        for (GroupBox* g : { fRoomGroup.get(), fPlaceGroup.get(), fMixGroup.get() })
+        {
+            g->setAbsolutePos(colX, y);
+            g->setSize(static_cast<uint>(colW), static_cast<uint>(rowH));
+            y += rowH + gap;
+        }
+
+        // Walls tab: the two pairs side by side over two rows' height (two rows of four controls
+        // each), the decay view across the bottom row.
+        const int halfW = (W - 2 * M - gap) / 2;
+        fSideGroup->setAbsolutePos(M, row0);
+        fSideGroup->setSize(static_cast<uint>(halfW), static_cast<uint>(2 * rowH + gap));
+        fFBGroup->setAbsolutePos(M + halfW + gap, row0);
+        fFBGroup->setSize(static_cast<uint>(W - 2 * M - gap - halfW), static_cast<uint>(2 * rowH + gap));
+        fRoomDecay->setUiScale(s);
+        fRoomDecay->setAbsolutePos(M, row2);
+        fRoomDecay->setSize(static_cast<uint>(W - 2 * M), static_cast<uint>(rowH));
 
         // Knob diameter bounded by the row height (room for label + value) and, via relayout, the
         // cell width. Dropdowns are sized to their cell by relayout(); we only set their scale.
@@ -510,8 +741,17 @@ private:
             return fDecayGroup.get();
         case kParamPressToDecay: case kParamTimbreToTilt: case kParamTimbreToPos:
             return fExpressionGroup.get();
+        case kParamRoomWidth: case kParamRoomDepth: case kParamRoomTrack: case kParamDecayTrack:
+        case kParamRoomAir: case kParamRoomDetail:
+            return fRoomGroup.get();
+        case kParamSrcX: case kParamSrcY: case kParamMicX: case kParamMicY:
+            return fPlaceGroup.get();
+        case kParamDirect: case kParamEarly: case kParamLate:
+            return fMixGroup.get();
         default:
-            return fOutputGroup.get(); // strikePos, brightness, mix
+            if (i >= kParamSideAbsorb && i <= kParamSideLink) return fSideGroup.get();
+            if (i >= kParamFBAbsorb && i <= kParamFBLink)     return fFBGroup.get();
+            return fOutputGroup.get(); // strikePos, brightness
         }
     }
 
@@ -531,7 +771,16 @@ private:
             return colDecay();
         case kParamPressToDecay: case kParamTimbreToTilt: case kParamTimbreToPos:
             return colExpression();
+        case kParamRoomWidth: case kParamRoomDepth: case kParamRoomTrack: case kParamDecayTrack:
+        case kParamRoomAir: case kParamRoomDetail:
+            return colRoom();
+        case kParamSrcX: case kParamSrcY: case kParamMicX: case kParamMicY:
+            return colPlacement();
+        case kParamDirect: case kParamEarly: case kParamLate:
+            return colMix();
         default:
+            if (i >= kParamSideAbsorb && i <= kParamSideLink) return colSideWalls();
+            if (i >= kParamFBAbsorb && i <= kParamFBLink)     return colFBWalls();
             return colOutput();
         }
     }
@@ -552,6 +801,21 @@ private:
             || i == kParamPitch || i == kParamDecayT60 || i == kParamDampTilt
             || i == kParamBrightness || i == kParamDampBellAmount
             || i == kParamDampBellCentre || i == kParamDampBellWidth;
+    }
+
+    static bool affectsRoomViews(uint32_t i) { return i >= kParamRoomWidth; }
+
+    void pushRoomViews()
+    {
+        const float* v = fValues;
+        fRoomMap->setRoom(v[kParamRoomWidth], v[kParamRoomDepth]);
+        fRoomMap->setObject(v[kParamSrcX], v[kParamSrcY]);
+        fRoomMap->setMic(v[kParamMicX], v[kParamMicY]);
+        fRoomMap->setWall(0, v[kParamSideAbsorb], v[kParamSideRing]);
+        fRoomMap->setWall(1, v[kParamFBAbsorb], v[kParamFBRing]);
+        fRoomDecay->update(v[kParamRoomWidth], v[kParamRoomDepth], v[kParamRoomAir], v[kParamRoomDetail],
+                           { v[kParamSideAbsorb], v[kParamSideBright], v[kParamSideRing], v[kParamSideRingRatio] },
+                           { v[kParamFBAbsorb], v[kParamFBBright], v[kParamFBRing], v[kParamFBRingRatio] });
     }
 
     void pushSpectrum()
@@ -584,6 +848,11 @@ private:
     std::unique_ptr<ModalSpectrum> fSpectrum;
     std::unique_ptr<GroupBox>      fGlobalGroup, fStrikeGroup, fObjectGroup, fDecayGroup, fOutputGroup,
                                    fExpressionGroup;
+    std::unique_ptr<RoomMap>       fRoomMap;
+    std::unique_ptr<RoomDecay>     fRoomDecay;
+    std::unique_ptr<GroupBox>      fRoomGroup, fPlaceGroup, fMixGroup, fSideGroup, fFBGroup;
+    std::unique_ptr<TabBar>        fTabBar;
+    int                            fTab = 0;
     std::unique_ptr<Knob>          fKnobs[kParamCount];
     std::unique_ptr<Dropdown>      fDropdowns[kParamCount];
     std::unique_ptr<PopupMenu>     fMenu;

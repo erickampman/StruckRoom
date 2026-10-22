@@ -21,9 +21,12 @@ M/S pair. It is tuned at each note-on, never per block: bends and glides move on
   (a resonator's state read at a much lower frequency is a huge amplitude). Wall banks reset instead.
 - **Detail** (room modes up to N × f0) is the CPU control. Measured, Apple Silicon, 48 kHz, 64-sample
   blocks, 4-note chord: Detail 12 (default) 16% of a core, worst strike block 0.44 ms; Detail 16 40%.
-- The 29 room and wall parameters have **no GUI panels yet** (the author's choice: host knobs first,
-  panels once we know which controls matter). `StruckRoomUI.cpp` skips every index from
-  `kParamRoomWidth` on. Spread became Width (the M/S side level); the bank itself runs at Spread 0.
+- The editor has three tabs (header): **Object** (StruckSynth's page, unchanged), **Room** (a
+  `RoomMap` — drag the object and listener, which are Src/Mic X/Y — beside Room, Placement and Mix),
+  **Walls** (both pairs, two rows of four via `GroupBox::setColumns`, over `RoomDecay`, every room
+  mode's T60 at C4 from the engine's own formula). Tabs only show/hide widgets; all are built up front,
+  before the PopupMenu, which must stay last to draw on top. Spread became Width (the M/S side level);
+  the bank itself runs at Spread 0.
 - `tools/roomlab/` is the offline renderer the room was ported from, with its README of findings.
 - `test/ss_room_test.cpp` fuzzes the core (random settings, every range corner) for non-finite or
   runaway output. clap-validator's param-fuzz-bounds caught a 0/0 when source and mic share a wall.

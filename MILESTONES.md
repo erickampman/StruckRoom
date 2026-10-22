@@ -8,7 +8,8 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] 29 host parameters (room, placement, mix, two wall pairs), presets, Poly 4 default, Width = M/S side
 - [x] ss-room fuzz test; ctest 13/13; clap-validator 35 pass, 0 fail
 - [ ] By hand: play it in a host and decide which controls matter
-- [ ] GUI panels for the room (after the above)
+- [x] Editor tabs: Object / Room (draggable map) / Walls (decay plot)
+- [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
 - [ ] Rename leftovers: help page still describes StruckSynth
 
 ## Tests

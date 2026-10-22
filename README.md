@@ -38,8 +38,10 @@ room.
 | | Link | On: the wall rings with the energy it absorbed, not the full incident sound |
 | Global | Width | the M/S pair's side level (was Spread) |
 
-The room parameters are in the host's generic parameter view and automation for now; the custom
-editor still shows only the object's panels. `tools/roomlab/` is the offline renderer the room was
+The editor has three tabs. **Object** is the struck object, as in StruckSynth. **Room** shows the
+room from above: drag the object and the listener around it, beside the Room, Placement and Mix
+panels. **Walls** has the two wall pairs side by side over a plot of every room mode's decay against
+frequency, coloured by which pair of walls it mostly reflects from. `tools/roomlab/` is the offline renderer the room was
 prototyped in, with notes on what its first experiments showed.
 
 **CPU.** Every voice carries its own room, so voices are expensive: **Poly 4** is the default

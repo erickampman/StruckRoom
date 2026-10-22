@@ -43,6 +43,8 @@ public:
 
     // Register a control (already parented to this box) for row layout.
     void addControl(SubWidget* control) { fControls.push_back(control); }
+    // Wrap the controls into rows of this many (0, the default: one row of all of them).
+    void setColumns(int columns) { fColumns = columns; }
     int  controlCount() const { return static_cast<int>(fControls.size()); }
 
     // The inner content rectangle (window-absolute), below the title strip and inside padding.
@@ -55,7 +57,7 @@ public:
         h = static_cast<int>(getHeight()) - fTitleHeight - fPadding;
     }
 
-    // Lay the registered controls out evenly across the content area.
+    // Lay the registered controls out evenly across the content area, in rows of setColumns().
     void relayout()
     {
         const int n = static_cast<int>(fControls.size());
@@ -69,11 +71,14 @@ public:
         if (contentW <= 0 || contentH <= 0)
             return;
 
-        const int cellW = contentW / n;
+        const int cols  = (fColumns > 0 && fColumns < n) ? fColumns : n;
+        const int rows  = (n + cols - 1) / cols;
+        const int cellW = contentW / cols;
+        const int cellH = contentH / rows;
         for (int i = 0; i < n; ++i)
         {
-            fControls[i]->setSize(static_cast<uint>(cellW), static_cast<uint>(contentH));
-            fControls[i]->setAbsolutePos(contentX + i * cellW, contentY);
+            fControls[i]->setSize(static_cast<uint>(cellW), static_cast<uint>(cellH));
+            fControls[i]->setAbsolutePos(contentX + (i % cols) * cellW, contentY + (i / cols) * cellH);
         }
     }
 
@@ -113,6 +118,7 @@ private:
     Color                   fAccent { 150, 200, 210 };
     bool                    fHasFont = false;
     float                   fUiScale = 1.0f;
+    int                     fColumns = 0;
 
     int fPadding     = 10;
     int fTitleHeight = 28;
