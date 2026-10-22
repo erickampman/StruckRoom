@@ -103,9 +103,9 @@ protected:
         const float w = getWidth(), h = getHeight();
 
         // Panel background + border.
-        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(42, 34, 26)); fill();
+        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(46, 40, 22)); fill();
         beginPath(); roundedRect(0.5f, 0.5f, w - 1, h - 1, 6);
-        strokeColor(Color(74, 62, 48)); strokeWidth(1.0f); stroke();
+        strokeColor(Color(80, 70, 42)); strokeWidth(1.0f); stroke();
 
         const float padX = 12, padTop = 10, padBot = 16;
         const float x0 = padX, x1 = w - padX, y1 = h - padBot;
@@ -250,9 +250,9 @@ protected:
     void onNanoDisplay() override
     {
         const float w = getWidth(), h = getHeight(), s = fUiScale;
-        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(42, 34, 26)); fill();
+        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(46, 40, 22)); fill();
         beginPath(); roundedRect(0.5f, 0.5f, w - 1, h - 1, 6);
-        strokeColor(Color(74, 62, 48)); strokeWidth(1.0f); stroke();
+        strokeColor(Color(80, 70, 42)); strokeWidth(1.0f); stroke();
 
         const float x0 = 44 * s, x1 = w - 12 * s, yTop = 24 * s, y1 = h - 20 * s;
         if (x1 <= x0 || y1 <= yTop) return;
@@ -263,7 +263,7 @@ protected:
         // Harmonics of the note, for orientation.
         beginPath();
         for (int n = 1; n <= (int)fDetail; n *= 2) { moveTo(px((float)n), yTop); lineTo(px((float)n), y1); }
-        strokeColor(Color(66, 56, 44)); strokeWidth(1.0f); stroke();
+        strokeColor(Color(72, 64, 40)); strokeWidth(1.0f); stroke();
 
         const Color side = colSideWalls(), fb = colFBWalls();
         for (int i = 0; i < fCount; ++i)
@@ -559,7 +559,7 @@ protected:
     void onNanoDisplay() override
     {
         const float w = getWidth(), h = getHeight();
-        beginPath(); rect(0, 0, w, h); fillColor(Color(30, 24, 18)); fill();
+        beginPath(); rect(0, 0, w, h); fillColor(Color(32, 28, 14)); fill();
 
         // Title, just to the right of the brand logo (fTitleX set in layout()).
         if (fHasFont)

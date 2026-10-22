@@ -50,9 +50,9 @@ protected:
     {
         const float w = getWidth(), h = getHeight(), s = fUiScale;
 
-        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(42, 34, 26)); fill();
+        beginPath(); roundedRect(0, 0, w, h, 6); fillColor(Color(46, 40, 22)); fill();
         beginPath(); roundedRect(0.5f, 0.5f, w - 1, h - 1, 6);
-        strokeColor(Color(74, 62, 48)); strokeWidth(1.0f); stroke();
+        strokeColor(Color(80, 70, 42)); strokeWidth(1.0f); stroke();
 
         float rx, ry, rw, rh;
         roomRect(rx, ry, rw, rh);
@@ -64,7 +64,7 @@ protected:
             beginPath();
             for (float x = perLambda; x < rw - 0.5f; x += perLambda) { moveTo(rx + x, ry); lineTo(rx + x, ry + rh); }
             for (float y = perLambda; y < rh - 0.5f; y += perLambda) { moveTo(rx, ry + rh - y); lineTo(rx + rw, ry + rh - y); }
-            strokeColor(Color(66, 56, 44)); strokeWidth(1.0f); stroke();
+            strokeColor(Color(72, 64, 40)); strokeWidth(1.0f); stroke();
         }
 
         // Walls: side walls are the left and right edges, front/back the bottom and top. Heavier as
