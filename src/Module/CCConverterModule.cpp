@@ -6,7 +6,7 @@
 //  CCConverterModule (AUv3); the CC index/value arrive in pm::UmpMessage::ccIndex / ccData.
 //
 //  PlainOldSynth adds a Per Note mode (CCParamItemPerNote), which is how CC74 becomes the per-voice
-//  "Timbre" source. StruckSynth takes PlainOldSynth's version and feeds CC74 to ModalBank's damp tilt
+//  "Timbre" source. StruckRoom takes PlainOldSynth's version and feeds CC74 to ModalBank's damp tilt
 //  and strike position (the Tmb>Tilt / Tmb>Pos knobs; see VoiceManager::buildDefaultPatch):
 //
 //  - Off (the default, and what CC #1 uses): the last value of that CC on ANY channel, as before.
@@ -150,7 +150,7 @@ void MIDICCConverter(const pm::UmpMessage& message, Module* module)
         state->channel = message.channel & 0x0F;
         state->hasNoteValue = false;
         state->released = false;
-        state->ramp.snapNext();   // every note-on re-strikes in StruckSynth, so start at the new value
+        state->ramp.snapNext();   // every note-on re-strikes in StruckRoom, so start at the new value
         break;
     case pm::kStatusPerNoteManagement:
         if (perNote && (message.optionFlags & pm::kPerNoteMgmtReset)) state->hasNoteValue = false;

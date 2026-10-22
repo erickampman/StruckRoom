@@ -90,8 +90,8 @@ enum ModuleParamKind : NSUInteger {
    ModuleParamKindJuliaGran,
    ModuleParamKindClockGran,
    ModuleParamKindCVMixer, // IFSynth: combine mod sources (add/multiply, per-input enable)
-   ModuleParamKindStrike,    // StruckSynth: note/gate → shaped excitation burst
-   ModuleParamKindModalBank, // StruckSynth: bank of damped modal resonators
+   ModuleParamKindStrike,    // StruckRoom: note/gate → shaped excitation burst
+   ModuleParamKindModalBank, // StruckRoom: bank of damped modal resonators
 };
 
 // Module instance — the middle byte of a param address (1..24).
@@ -321,7 +321,7 @@ enum VoiceStealAlgorithm : NSUInteger {
    VoiceStealAlgorithmFurthest,
 };
 
-// --- StruckSynth: Strike (exciter) -------------------------------------------------------
+// --- StruckRoom: Strike (exciter) -------------------------------------------------------
 // Turns a note/gate event into a shaped excitation burst for a resonator. MIDI note-on drives
 // it directly (velocity → strength); the optional Gate input takes over for non-MIDI triggering.
 enum StrikeParamItem : NSUInteger {
@@ -346,7 +346,7 @@ enum StrikeContactMode : NSUInteger {
    StrikeContactWallClock,         // fixed contact time in ms (physical mallet)
 };
 
-// --- StruckSynth: ModalBank (resonator) --------------------------------------------------
+// --- StruckRoom: ModalBank (resonator) --------------------------------------------------
 // A bank of independently damped two-pole resonators, one per vibrational mode, excited by an
 // input signal. Items 1-5 are connection ports; the rest are object/decay/strike/output
 // controls, plus a second pitch input appended at the end (appended so existing addresses stay put). Core (framework-free): ModalBank.hpp/.cpp, ModalMaterials/Generators.hpp.

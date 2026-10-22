@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Initialise every dependency submodule StruckSynth needs, at the pinned
+# Initialise every dependency submodule StruckRoom needs, at the pinned
 # commits recorded in .gitmodules, then apply the local dependency patches.
 #
 # Run this once after a fresh `git clone`.

@@ -1,15 +1,15 @@
-// StruckSynthParams.h — the plugin's parameter table, shared by the DSP and UI. A focused modal
+// StruckRoomParams.h — the plugin's parameter table, shared by the DSP and UI. A focused modal
 // set: global voice controls, the Strike exciter, and the ModalBank resonator (object / decay /
 // timbre / output). Non-global params route to the matching VoiceManager module item (see the
 // DSP's vmAddress). Defaults mirror the module constants in pm_param_data.cpp.
 
-#ifndef STRUCKSYNTH_PARAMS_H
-#define STRUCKSYNTH_PARAMS_H
+#ifndef STRUCKROOM_PARAMS_H
+#define STRUCKROOM_PARAMS_H
 
 #include <cstddef>
 #include <cstdint>
 
-namespace strucksynth {
+namespace struckroom {
 
 enum ParamIndex {
    // --- Global ---
@@ -151,6 +151,6 @@ inline const char* const* choicesFor(uint32_t index)
 
 inline bool isDropdownParam(uint32_t index) { return choicesFor(index) != nullptr; }
 
-} // namespace strucksynth
+} // namespace struckroom
 
-#endif // STRUCKSYNTH_PARAMS_H
+#endif // STRUCKROOM_PARAMS_H

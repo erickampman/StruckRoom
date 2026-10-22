@@ -1,8 +1,8 @@
 {
-  "app": { "name": "StruckSynth", "version": "1.0.0" },
-  "plugin": { "format": "clap", "id": "com.unlikelyware.strucksynth" },
+  "app": { "name": "StruckRoom", "version": "1.0.0" },
+  "plugin": { "format": "clap", "id": "com.unlikelyware.struckroom" },
   "meta": { "author": "unlikelyware", "name": "Tine EP" },
-  "schema": "strucksynth.preset",
+  "schema": "struckroom.preset",
   "schemaVersion": 1,
   "state": {
     "parameterState": {

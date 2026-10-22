@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Apply the local patches that StruckSynth carries against its vendored
+# Apply the local patches that StruckRoom carries against its vendored
 # dependency submodules. Idempotent: patches already applied are skipped.
 #
 # Patch file naming convention:
@@ -39,7 +39,7 @@ for patch in "$patch_dir"/*.patch; do
     fi
 
     if git -C "$sub" apply --reverse --check "$patch" >/dev/null 2>&1; then
-        if [ "${STRUCKSYNTH_PATCH_VERBOSE:-0}" = "1" ]; then
+        if [ "${STRUCKROOM_PATCH_VERBOSE:-0}" = "1" ]; then
             echo "apply_dep_patches: already applied  $(basename "$patch")"
         fi
         continue

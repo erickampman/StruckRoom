@@ -61,7 +61,7 @@ void VoiceManager::reset() {
 void VoiceManager::buildDefaultPatch(Voice& voice)
 {
 #if HAS_DEFAULT_PATCH
-    // StruckSynth v1 voice: MIDI note-on -> Strike (exciter) -> ModalBank (resonator) -> Final.
+    // StruckRoom v1 voice: MIDI note-on -> Strike (exciter) -> ModalBank (resonator) -> Final.
     // No VCA envelope: the bank's own T60 decay IS the amplitude envelope, and the voice frees
     // on silence (VoiceStateManager Active -> Deactivating -> Inactive), so the ring-down
     // survives note-off. Pitch tracks the note through the shared Slew (glide). The IFS / Sine /

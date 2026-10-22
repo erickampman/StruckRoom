@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>help-StruckSynth</title>
+    <title>help-StruckRoom</title>
     <style>
     :root {
   --bg: #0f1115;
@@ -253,8 +253,8 @@ h1.card, h2.card, h3.card {
 </head>
 <body>
 <div class="page">
-<p><div style="display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0.5rem;"> <a href="https://www.unlikelyware.com" target="_blank" rel="noopener noreferrer"> <img src="Unlikelyware.png" alt="Unlikelyware" style="width: 56px; height: auto; border-radius: 10px; margin: 0; display: block;"> </a> <h1 style="margin: 0;">StruckSynth</h1> </div></p>
-<p><p> <em>StruckSynth is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em> </p></p>
+<p><div style="display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0.5rem;"> <a href="https://www.unlikelyware.com" target="_blank" rel="noopener noreferrer"> <img src="Unlikelyware.png" alt="Unlikelyware" style="width: 56px; height: auto; border-radius: 10px; margin: 0; display: block;"> </a> <h1 style="margin: 0;">StruckRoom</h1> </div></p>
+<p><p> <em>StruckRoom is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em> </p></p>
 <div class="callout callout-note card">
 <div class="callout-content">
 <h2>On This Page</h2>
@@ -266,7 +266,7 @@ h1.card, h2.card, h3.card {
 <div class="callout callout-note card">
 <div class="callout-content">
 <h2 id="overview">Overview</h2>
-<p>StruckSynth is a <strong>modal-synthesis instrument</strong>: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.</p>
+<p>StruckRoom is a <strong>modal-synthesis instrument</strong>: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.</p>
 <p>Each note goes through three stages:</p>
 <ol>
 <li><strong>Strike</strong> makes a short excitation burst: a smooth mallet bump or a burst of noise, from a single sample long (the hardest, brightest hit) to about 20 ms or 1.6 periods of the note (the softest).</li>
@@ -280,7 +280,7 @@ h1.card, h2.card, h3.card {
 <div class="callout-content">
 <h2 id="getting-started">Getting Started</h2>
 <ol>
-<li><strong>Load StruckSynth</strong> on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).</li>
+<li><strong>Load StruckRoom</strong> on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).</li>
 <li><strong>Play.</strong> The default patch (the same as the <strong>Init</strong> preset) is a free-free metal bar with a 2-second decay.</li>
 <li><strong>Pick a preset</strong> from the <strong>Preset</strong> menu at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.</li>
 <li><strong>Change the object</strong> with <strong>Material</strong> in the Object panel, and watch the spectrum at the top left redraw.</li>
@@ -413,7 +413,7 @@ h1.card, h2.card, h3.card {
 <h2 id="voices-midi">Voices and MIDI</h2>
 <p><strong>Voices.</strong> In the Poly modes each note gets its own voice, up to 10, 20 or 32; past that, a sounding voice is taken for the new note. Because notes ring after note-off, a fast passage with a long Decay can use many voices: choose Poly 20 or 32 for that. <strong>Mono</strong> plays one voice: a new note while another is held strikes the same resonators again and glides them to the new pitch (see <strong>Glide</strong>), so the old note's ring carries into the new one. Letting go of the new note goes back to the note still held.</p>
 <p><strong>Sustain pedal</strong> (CC 64) holds released notes in the Poly modes. Since a struck note rings on anyway, the pedal mostly matters for what still controls the note: see <i>Released notes</i> below.</p>
-<p><strong>MIDI 2.0 first.</strong> StruckSynth prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; <strong>Vel>Level</strong> decides how loud it is.</p>
+<p><strong>MIDI 2.0 first.</strong> StruckRoom prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; <strong>Vel>Level</strong> decides how loud it is.</p>
 <p><strong>A note is note number + channel + group.</strong> The same key on two channels is two independent notes.</p>
 </div>
 </div>
@@ -433,7 +433,7 @@ h1.card, h2.card, h3.card {
 <details class="disclosure">
 <summary class="disclosure-title subtle">MPE</summary>
 <div class="disclosure-content">
-<p>With <strong>MPE</strong> on, StruckSynth treats its input as an MPE <strong>lower zone</strong>: channel 1 is the master channel, 2–16 are the member channels, one per note. StruckSynth only receives MPE; it never sends it.</p>
+<p>With <strong>MPE</strong> on, StruckRoom treats its input as an MPE <strong>lower zone</strong>: channel 1 is the master channel, 2–16 are the member channels, one per note. StruckRoom only receives MPE; it never sends it.</p>
 <ul>
 <li>A member channel's bend range is <strong>±48 semitones</strong> by default, and the master channel's bend (±2) is added to every note, so the controller's pitch wheel moves everything on top of each note's own slide.</li>
 <li>RPN 0 on any member channel sets the range of all of them.</li>
@@ -458,7 +458,7 @@ h1.card, h2.card, h3.card {
 <li><strong>Pressure</strong> and <strong>Brightness</strong> drive the <a href="#expression">Expression</a> knobs' pressure and timbre.</li>
 <li>Volume, Pan, Vibrato and Expression (the CLAP expression of that name) are ignored.</li>
 </ul>
-<p>For a note the host sends as a CLAP note, StruckSynth reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.</p>
+<p>For a note the host sends as a CLAP note, StruckRoom reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.</p>
 </div>
 </details>
 <details class="disclosure">
@@ -478,7 +478,7 @@ h1.card, h2.card, h3.card {
 <ul>
 <li><strong>Choosing a preset sets every sound parameter</strong>, Voices and the Expression knobs included. It leaves the <strong>MPE</strong> switch alone.</li>
 <li>The menu shows <strong>--</strong> until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.</li>
-<li>There's no way to save your own presets in StruckSynth: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.</li>
+<li>There's no way to save your own presets in StruckRoom: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.</li>
 </ul>
 </div>
 </div>
@@ -510,7 +510,7 @@ h1.card, h2.card, h3.card {
 <li><strong>The Expression knobs do nothing.</strong> The controller isn't sending pressure or CC 74, or the knobs are at 0.</li>
 <li><strong>Bends are huge.</strong> MPE is on and the controller isn't an MPE controller: member channels bend ±48 semitones. Turn <strong>MPE</strong> off.</li>
 <li><strong>Distortion.</strong> Lower <strong>Level</strong>. Many loud notes ringing together add up.</li>
-<li><strong>A rebuilt StruckSynth doesn't show its changes.</strong> Quit and restart the host: a running host keeps the plugin it loaded first.</li>
+<li><strong>A rebuilt StruckRoom doesn't show its changes.</strong> Quit and restart the host: a running host keeps the plugin it loaded first.</li>
 </ul>
 </div>
 </div>

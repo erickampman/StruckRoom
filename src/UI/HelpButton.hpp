@@ -3,8 +3,8 @@
 // the system temp directory and opens it in the system's default browser, so the built plugin
 // still has no filesystem dependency of its own.
 
-#ifndef STRUCKSYNTH_HELPBUTTON_HPP
-#define STRUCKSYNTH_HELPBUTTON_HPP
+#ifndef STRUCKROOM_HELPBUTTON_HPP
+#define STRUCKROOM_HELPBUTTON_HPP
 
 #include "NanoVG.hpp"
 
@@ -105,7 +105,7 @@ private:
     {
         namespace fs = std::filesystem;
         std::error_code ec;
-        const fs::path dir = fs::temp_directory_path(ec) / "StruckSynth-help";
+        const fs::path dir = fs::temp_directory_path(ec) / "StruckRoom-help";
         if (ec) return;
         fs::create_directories(dir, ec);
         if (ec) return;
@@ -143,4 +143,4 @@ private:
 
 END_NAMESPACE_DGL
 
-#endif // STRUCKSYNTH_HELPBUTTON_HPP
+#endif // STRUCKROOM_HELPBUTTON_HPP

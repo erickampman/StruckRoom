@@ -47,9 +47,9 @@
 //    not outlive its note.
 //  - De-zippering. Bend arrives as discrete events; a step in pitch is audible, so a change of target
 //    ramps linearly over kRampSeconds. Every note-on snaps instead: the note must start at its bent
-//    pitch, and in StruckSynth even a mono legato note re-strikes the bank, so there is no sounding
+//    pitch, and in StruckRoom even a mono legato note re-strikes the bank, so there is no sounding
 //    pitch worth gliding from. (PlainOldSynth ramps on legato via Module::legatoContinuation, which
-//    StruckSynth does not have.)
+//    StruckRoom does not have.)
 //
 //  Per-note bend resets to centre on every note-on (a new note, a steal or a mono retrigger) and on a
 //  per-note management message with the Reset flag. Per-note bend sent BEFORE its note-on is

@@ -40,7 +40,7 @@ jobs:
       - name: Fetch pinned dependency submodules
         run: tools/fetch_deps.sh
       - name: Configure
-        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSTRUCKSYNTH_WERROR=ON
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSTRUCKROOM_WERROR=ON
       - name: Build
         run: cmake --build build -j
       - name: Test (framework self-tests via ctest)

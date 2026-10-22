@@ -1,4 +1,4 @@
-# Testing StruckSynth
+# Testing StruckRoom
 
 The project ships a suite of in-process self-tests (via CTest) plus the CLAP conformance
 validator. Everything runs headless on Linux/macOS — no DAW or audio device required.
@@ -25,15 +25,15 @@ tools/fetch_deps.sh
 cmake -B build -G Ninja -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ctest --test-dir build --output-on-failure
-clap-validator validate build/StruckSynth.clap
-ninja -C build install-auv2 && auval -v aumu StSy nLKL      # macOS: AU VALIDATION SUCCEEDED
+clap-validator validate build/StruckRoom.clap
+ninja -C build install-auv2 && auval -v aumu StRm nLKL      # macOS: AU VALIDATION SUCCEEDED
 ```
 
 Steinberg's VST3 validator builds from `external/vst3sdk` (`ninja validator` in a separate build of
 that folder with `-DSMTG_ENABLE_VSTGUI_SUPPORT=OFF`); its CMake rejects an Xcode path with spaces, so
-point `DEVELOPER_DIR` at a symlink without them. Then `validator build/StruckSynth.vst3`.
+point `DEVELOPER_DIR` at a symlink without them. Then `validator build/StruckRoom.vst3`.
 
-Add `-DSTRUCKSYNTH_WERROR=ON` at configure time to treat warnings as errors for the framework
+Add `-DSTRUCKROOM_WERROR=ON` at configure time to treat warnings as errors for the framework
 and the `pm-selftest` glue (this is what CI keys on). The tests that pull in vendored
 PolygraphModular headers stay on that code's own warning style.
 
@@ -73,10 +73,10 @@ Validate the built plugin against the CLAP spec with
 [`clap-validator`](https://github.com/free-audio/clap-validator):
 
 ```sh
-clap-validator validate build/StruckSynth.clap
+clap-validator validate build/StruckRoom.clap
 ```
 
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs the configure + build + `ctest` on every push across
-Linux (gcc/clang) and macOS (clang) with `-DSTRUCKSYNTH_WERROR=ON`.
+Linux (gcc/clang) and macOS (clang) with `-DSTRUCKROOM_WERROR=ON`.

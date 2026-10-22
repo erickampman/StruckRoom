@@ -1,4 +1,4 @@
-# StruckSynth
+# StruckRoom
 
 A cross-platform **CLAP modal-synthesis instrument** from Unlikelyware — a struck-resonator
 voice built on the PolygraphModular voice engine. Each note fires a shaped excitation burst
@@ -55,7 +55,7 @@ dropped, because no voice owns that note yet. The default range is not a host pa
 ### MPE
 
 The **MPE** switch (Global panel, off by default) treats input as an MPE lower zone: master channel
-1, member channels 2–16. MPE is accepted as an input only; StruckSynth never sends it.
+1, member channels 2–16. MPE is accepted as an input only; StruckRoom never sends it.
 
 - A member channel's bend range defaults to **±48**, and the master channel's bend (±2) is **added**
   to every member note, so the controller's pitch wheel moves the whole zone on top of each note's
@@ -134,7 +134,7 @@ down to silence, is stolen, or (mono) the note leaves the held stack. Hosts such
 note's per-voice modulation and expressions running until then. Notes that arrive as MIDI events get
 no note end, since a CLAP note end answers a CLAP note-on. The voice-info extension reports the voice
 count (10, or 1 in Mono) and that notes may overlap on the same key, since note ids keep them apart. VST3 note expression
-(PlainOldSynth's clap-wrapper extension) does not apply: StruckSynth has no VST3 build.
+(PlainOldSynth's clap-wrapper extension) does not apply: StruckRoom has no VST3 build.
 
 The [DISTRHO Plugin Framework (DPF)](https://github.com/DISTRHO/DPF) is used **only as the GUI
 layer** (UIExporter + NanoVG + pugl). The CLAP entry point is hand-written in `src/plugin.cpp`,
@@ -149,14 +149,14 @@ The engine (`src/`) mirrors PolygraphModular's structure; the CLAP plugin + GUI 
 ```
 plugin/               the shared plugin definition
                         DistrhoPluginInfo.h (UI flags; the plugin identity macros are inert),
-                        StruckSynthParams.h (shared param table + dropdown labels)
+                        StruckRoomParams.h (shared param table + dropdown labels)
 src/plugin.cpp        the raw CLAP plugin: entry point, note/audio/params/state/gui extensions,
                         and the DSP glue (MIDI + params → VoiceManager)
 src/plugin_gui.h      the C seam between plugin.cpp and the GUI shell
 src/UI/               the plugin GUI (reusable NanoVG widgets + the panel)
                         Knob, Slider, Toggle, Dropdown, PopupMenu, TabBar, GroupBox, TitleText,
                         Logo; PresetKeys / PresetDump (preset menu + dev-only JSON dumper);
-                        StruckSynthUI.cpp — composes the controls into labelled groups and hosts
+                        StruckRoomUI.cpp — composes the controls into labelled groups and hosts
                         them through DPF's UIExporter
 src/Common/           shim + MIDI + params + utilities
                         pm_compat.h (Apple→portable), pm_midi.* (spec UMP + MIDI-1 decode),
@@ -197,8 +197,8 @@ sudo apt install pkg-config libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev
 Then:
 
 ```sh
-git clone https://github.com/erickampman/StruckSynth.git
-cd StruckSynth
+git clone https://github.com/erickampman/StruckRoom.git
+cd StruckRoom
 tools/fetch_deps.sh                            # pinned submodules + patches/
 cmake -B build -G Ninja -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build
@@ -210,22 +210,22 @@ ctest --test-dir build --output-on-failure     # see TESTING.md for the full sui
 patch that makes the AUv2 editor draw. On Linux the VST3 SDK also wants `libxinerama-dev
 libxcb1-dev libx11-xcb-dev libxcb-util-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev`.
 
-Produces `build/StruckSynth.clap` (a bundle on macOS). `cmake --build build --target install-clap`
+Produces `build/StruckRoom.clap` (a bundle on macOS). `cmake --build build --target install-clap`
 symlinks it into `~/.clap` (Linux) or `~/Library/Audio/Plug-Ins/CLAP/` (macOS), so any CLAP host
 picks up the freshest build after a rescan. Validate with
 [`clap-validator`](https://github.com/free-audio/clap-validator). Test details in
 [TESTING.md](TESTING.md).
 
-The same build also makes `build/StruckSynth.vst3` and, on macOS, `build/StruckSynth.component`
-(AUv2: type `aumu`, subtype `StSy`, manufacturer `nLKL`), both through clap-wrapper around the same
-plugin. On Linux the VST3 bundle is `build/Release/StruckSynth.vst3`. `install-vst3` symlinks it into
+The same build also makes `build/StruckRoom.vst3` and, on macOS, `build/StruckRoom.component`
+(AUv2: type `aumu`, subtype `StRm`, manufacturer `nLKL`), both through clap-wrapper around the same
+plugin. On Linux the VST3 bundle is `build/Release/StruckRoom.vst3`. `install-vst3` symlinks it into
 `~/.vst3` or `~/Library/Audio/Plug-Ins/VST3/`; `install-auv2` copies the component into
 `~/Library/Audio/Plug-Ins/Components/` (AU hosts don't reliably follow symlinks). Check the AU with
-`auval -v aumu StSy nLKL`; if it says it can't find the component, `killall -9
+`auval -v aumu StRm nLKL`; if it says it can't find the component, `killall -9
 AudioComponentRegistrar` and try again.
 
-Configure options: `-DSTRUCKSYNTH_BUILD_VST3=OFF`, `-DSTRUCKSYNTH_BUILD_AUV2=OFF` (on by default on
-macOS only), `-DSTRUCKSYNTH_WERROR=ON` (warnings as errors), `-DSTRUCKSYNTH_PRESET_DUMP=ON`
+Configure options: `-DSTRUCKROOM_BUILD_VST3=OFF`, `-DSTRUCKROOM_BUILD_AUV2=OFF` (on by default on
+macOS only), `-DSTRUCKROOM_WERROR=ON` (warnings as errors), `-DSTRUCKROOM_PRESET_DUMP=ON`
 (dev-only DUMP button that writes the current patch as JSON to `$HOME`).
 
 ## License

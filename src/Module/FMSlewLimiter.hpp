@@ -4,8 +4,8 @@
 //  changing modulation signal can't make the IIR filter jump (and ring/blow up).
 //
 
-#ifndef STRUCKSYNTH_FMSLEWLIMITER_HPP
-#define STRUCKSYNTH_FMSLEWLIMITER_HPP
+#ifndef STRUCKROOM_FMSLEWLIMITER_HPP
+#define STRUCKROOM_FMSLEWLIMITER_HPP
 
 #include <algorithm>
 
@@ -35,4 +35,4 @@ private:
     }
 };
 
-#endif // STRUCKSYNTH_FMSLEWLIMITER_HPP
+#endif // STRUCKROOM_FMSLEWLIMITER_HPP

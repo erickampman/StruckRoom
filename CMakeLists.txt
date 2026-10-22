@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)   # clap-wrapper needs 3.21
 
 # C is needed for DPF's pugl / dgl sources.
-project(StruckSynth VERSION 0.3.0 LANGUAGES C CXX)
+project(StruckRoom VERSION 0.3.0 LANGUAGES C CXX)
 
 # Everything is linked into the .clap, a shared module, so every static library in it (the engine,
 # the plugin core, DPF's DGL) must be position-independent. clang on Linux defaults to PIE and
@@ -11,10 +11,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 20)          # PM framework uses std::numbers / std::span
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(STRUCKSYNTH_WERROR "Treat warnings as errors (framework + tests)" OFF)
-option(STRUCKSYNTH_PRESET_DUMP "Dev-only: press 'P' in the UI to dump the patch as JSON to \$HOME" OFF)
-option(STRUCKSYNTH_BUILD_VST3 "Build a VST3 wrapper around the same plugin via clap-wrapper." ON)
-option(STRUCKSYNTH_BUILD_AUV2 "Build an AUv2 (.component) wrapper via clap-wrapper (macOS only)." ${APPLE})
+option(STRUCKROOM_WERROR "Treat warnings as errors (framework + tests)" OFF)
+option(STRUCKROOM_PRESET_DUMP "Dev-only: press 'P' in the UI to dump the patch as JSON to \$HOME" OFF)
+option(STRUCKROOM_BUILD_VST3 "Build a VST3 wrapper around the same plugin via clap-wrapper." ON)
+option(STRUCKROOM_BUILD_AUV2 "Build an AUv2 (.component) wrapper via clap-wrapper (macOS only)." ${APPLE})
 
 if(APPLE)
     # DPF's DistrhoUI_macOS.mm and clap-wrapper's AUv2 sources are Objective-C++.
@@ -68,37 +68,37 @@ endif()
 # reconfiguring (CONFIGURE_DEPENDS re-globs on build, but a brand new file still needs `cmake -B
 # build -S .` rerun once to pick up the new match).
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
-file(GLOB STRUCKSYNTH_PRESET_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Presets/*.json")
-set(STRUCKSYNTH_GENERATED_PRESETS_H "${CMAKE_BINARY_DIR}/generated/GeneratedPresets.h")
+file(GLOB STRUCKROOM_PRESET_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Presets/*.json")
+set(STRUCKROOM_GENERATED_PRESETS_H "${CMAKE_BINARY_DIR}/generated/GeneratedPresets.h")
 add_custom_command(
-    OUTPUT "${STRUCKSYNTH_GENERATED_PRESETS_H}"
+    OUTPUT "${STRUCKROOM_GENERATED_PRESETS_H}"
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/tools/gen_presets.py"
-            ${STRUCKSYNTH_PRESET_FILES} -o "${STRUCKSYNTH_GENERATED_PRESETS_H}"
-    DEPENDS ${STRUCKSYNTH_PRESET_FILES} "${CMAKE_SOURCE_DIR}/tools/gen_presets.py"
+            ${STRUCKROOM_PRESET_FILES} -o "${STRUCKROOM_GENERATED_PRESETS_H}"
+    DEPENDS ${STRUCKROOM_PRESET_FILES} "${CMAKE_SOURCE_DIR}/tools/gen_presets.py"
     COMMENT "Generating embedded presets from Presets/*.json")
-add_custom_target(generate_presets DEPENDS "${STRUCKSYNTH_GENERATED_PRESETS_H}")
+add_custom_target(generate_presets DEPENDS "${STRUCKROOM_GENERATED_PRESETS_H}")
 
 # --- embedded resources: Resources/* compiled in as raw bytes ----------------------------
 # Uses DPF's own res2c.py (ships in the dpf/ submodule) to embed the logo PNG's raw file bytes;
 # NanoVG's createImageFromMemory() decodes it at UI-construction time. No filesystem dependency
 # on the resource file once built — same reasoning as the preset codegen above.
-set(STRUCKSYNTH_RESOURCES_HPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.hpp")
-set(STRUCKSYNTH_RESOURCES_CPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.cpp")
+set(STRUCKROOM_RESOURCES_HPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.hpp")
+set(STRUCKROOM_RESOURCES_CPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.cpp")
 # res2c.py embeds a whole folder and names each symbol by the file's stem, so help.md (the source of
 # help.html) would collide with help.html. Copy everything but *.md into a staging folder first.
-file(GLOB STRUCKSYNTH_RESOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Resources/*")
-list(FILTER STRUCKSYNTH_RESOURCE_FILES EXCLUDE REGEX "\\.md$")
-set(STRUCKSYNTH_RESOURCES_STAGING "${CMAKE_BINARY_DIR}/generated/Resources")
+file(GLOB STRUCKROOM_RESOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Resources/*")
+list(FILTER STRUCKROOM_RESOURCE_FILES EXCLUDE REGEX "\\.md$")
+set(STRUCKROOM_RESOURCES_STAGING "${CMAKE_BINARY_DIR}/generated/Resources")
 add_custom_command(
-    OUTPUT "${STRUCKSYNTH_RESOURCES_HPP}" "${STRUCKSYNTH_RESOURCES_CPP}"
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKSYNTH_RESOURCES_STAGING}"
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKSYNTH_RESOURCES_STAGING}"
-    COMMAND ${CMAKE_COMMAND} -E copy ${STRUCKSYNTH_RESOURCE_FILES} "${STRUCKSYNTH_RESOURCES_STAGING}"
+    OUTPUT "${STRUCKROOM_RESOURCES_HPP}" "${STRUCKROOM_RESOURCES_CPP}"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKROOM_RESOURCES_STAGING}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKROOM_RESOURCES_STAGING}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${STRUCKROOM_RESOURCE_FILES} "${STRUCKROOM_RESOURCES_STAGING}"
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_SOURCE_DIR}/dpf/utils/res2c.py"
-            EmbeddedResources "${STRUCKSYNTH_RESOURCES_STAGING}" "${CMAKE_BINARY_DIR}/generated"
-    DEPENDS ${STRUCKSYNTH_RESOURCE_FILES} "${CMAKE_SOURCE_DIR}/dpf/utils/res2c.py"
+            EmbeddedResources "${STRUCKROOM_RESOURCES_STAGING}" "${CMAKE_BINARY_DIR}/generated"
+    DEPENDS ${STRUCKROOM_RESOURCE_FILES} "${CMAKE_SOURCE_DIR}/dpf/utils/res2c.py"
     COMMENT "Embedding Resources/* as compiled-in data")
-add_custom_target(generate_resources DEPENDS "${STRUCKSYNTH_RESOURCES_HPP}" "${STRUCKSYNTH_RESOURCES_CPP}")
+add_custom_target(generate_resources DEPENDS "${STRUCKROOM_RESOURCES_HPP}" "${STRUCKROOM_RESOURCES_CPP}")
 
 # --- DPF is used ONLY for the GUI ------------------------------------------
 # UIExporter + NanoVG + pugl. The CLAP entry point is ours (src/plugin.cpp), because DPF's
@@ -111,55 +111,55 @@ dpf__add_dgl_opengl(TRUE FALSE FALSE)
 # from pugl.hpp under C++17+, and a stringop-overflow false positive in nanovg's stb_image.h.
 target_compile_options(dgl-opengl PRIVATE -w)
 
-# --- strucksynth_core: the whole plugin (DSP + host glue + GUI shell) as one static archive ----
+# --- struckroom_core: the whole plugin (DSP + host glue + GUI shell) as one static archive ----
 # Shared by the .clap output below. Hidden visibility for our own objects, so clap_entry — marked
 # CLAP_EXPORT in plugin.cpp — is the only symbol this target exports (the vendored engine and DGL
 # libraries linked in keep their own default visibility).
-add_library(strucksynth_core STATIC
+add_library(struckroom_core STATIC
     src/plugin.cpp
-    src/UI/StruckSynthUI.cpp
-    "${STRUCKSYNTH_RESOURCES_CPP}"              # generated: logo, font and help page bytes (see above)
+    src/UI/StruckRoomUI.cpp
+    "${STRUCKROOM_RESOURCES_CPP}"              # generated: logo, font and help page bytes (see above)
     "${DPF_ROOT_DIR}/distrho/src/DistrhoUI.cpp"
     "${DPF_ROOT_DIR}/distrho/src/DistrhoUtils.cpp")
-set_target_properties(strucksynth_core PROPERTIES
+set_target_properties(struckroom_core PROPERTIES
     C_VISIBILITY_PRESET hidden
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
-target_include_directories(strucksynth_core PUBLIC
+target_include_directories(struckroom_core PUBLIC
     src                               # plugin_gui.h (the DSP <-> GUI seam)
-    plugin                            # DistrhoPluginInfo.h + StruckSynthParams.h
+    plugin                            # DistrhoPluginInfo.h + StruckRoomParams.h
     external/clap/include             # <clap/clap.h> (the raw entry point)
     "${CMAKE_BINARY_DIR}/generated"   # GeneratedPresets.h + EmbeddedResources.hpp
     "${DPF_ROOT_DIR}/distrho")        # DistrhoUI.hpp / DistrhoUIInternal.hpp
 # clap-wrapper's plugin-side extension header only (clapwrapper/vst3.h: which VST3 note expressions to
-# offer). Header-only and plain C, so the CLAP build needs it even with STRUCKSYNTH_BUILD_VST3 off.
-target_include_directories(strucksynth_core PRIVATE "${CMAKE_SOURCE_DIR}/external/clap-wrapper/include")
-target_compile_definitions(strucksynth_core PUBLIC
+# offer). Header-only and plain C, so the CLAP build needs it even with STRUCKROOM_BUILD_VST3 off.
+target_include_directories(struckroom_core PRIVATE "${CMAKE_SOURCE_DIR}/external/clap-wrapper/include")
+target_compile_definitions(struckroom_core PUBLIC
     DISTRHO_PLUGIN_TARGET_CLAP
     DISTRHO_IS_STANDALONE=0
-    STRUCKSYNTH_VERSION_STRING="${PROJECT_VERSION}")
-target_link_libraries(strucksynth_core PUBLIC pm_framework dgl-opengl)
-add_dependencies(strucksynth_core generate_presets generate_resources)
+    STRUCKROOM_VERSION_STRING="${PROJECT_VERSION}")
+target_link_libraries(struckroom_core PUBLIC pm_framework dgl-opengl)
+add_dependencies(struckroom_core generate_presets generate_resources)
 # These two reach pugl.hpp through DPF's private UI headers; mute only its <cstdbool> #warning.
-set_source_files_properties(src/UI/StruckSynthUI.cpp "${DPF_ROOT_DIR}/distrho/src/DistrhoUI.cpp"
+set_source_files_properties(src/UI/StruckRoomUI.cpp "${DPF_ROOT_DIR}/distrho/src/DistrhoUI.cpp"
     PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:GNU>:-Wno-cpp>")
-dpf__add_plugin_specific_ui_sources(strucksynth_core FALSE)   # macOS: DistrhoUI_macOS.mm
+dpf__add_plugin_specific_ui_sources(struckroom_core FALSE)   # macOS: DistrhoUI_macOS.mm
 if(APPLE)
     # The live Retina scale of the host window (see the file's header comment).
-    target_sources(strucksynth_core PRIVATE src/UI/BackingScale_mac.mm)
+    target_sources(struckroom_core PRIVATE src/UI/BackingScale_mac.mm)
 endif()
 # Dev-only JSON patch dumper (keystroke → file); compiled out of release builds.
-if(STRUCKSYNTH_PRESET_DUMP)
-    target_compile_definitions(strucksynth_core PRIVATE STRUCKSYNTH_PRESET_DUMP=1)
+if(STRUCKROOM_PRESET_DUMP)
+    target_compile_definitions(struckroom_core PRIVATE STRUCKROOM_PRESET_DUMP=1)
 endif()
 
 # --- the .clap output ------------------------------------------------------
 # A MODULE with no sources of its own would be rejected by CMake, and simply linking the archive is
 # not enough: nothing references clap_entry, so the linker would drop the object that defines it.
 # Hence the empty placeholder plus a whole-archive force-load.
-function(strucksynth_force_load_whole_archive TARGET_NAME LIB_NAME)
+function(struckroom_force_load_whole_archive TARGET_NAME LIB_NAME)
     if(APPLE)
         target_link_options(${TARGET_NAME} PRIVATE "-Wl,-force_load,$<TARGET_FILE:${LIB_NAME}>")
     elseif(UNIX)
@@ -168,82 +168,82 @@ function(strucksynth_force_load_whole_archive TARGET_NAME LIB_NAME)
     endif()
 endfunction()
 
-set(STRUCKSYNTH_EMPTY_SOURCE "${CMAKE_BINARY_DIR}/generated/strucksynth_empty.c")
+set(STRUCKROOM_EMPTY_SOURCE "${CMAKE_BINARY_DIR}/generated/struckroom_empty.c")
 # A genuinely empty file trips -Wempty-translation-unit under -Wpedantic -Werror, and ISO C requires
 # at least one declaration anyway (clap-wrapper applies -Wpedantic -Werror to the AUv2 target).
-set(_strucksynth_empty_content "typedef int strucksynth_empty_translation_unit_marker;\n")
-set(_strucksynth_empty_existing "")
-if(EXISTS "${STRUCKSYNTH_EMPTY_SOURCE}")
-    file(READ "${STRUCKSYNTH_EMPTY_SOURCE}" _strucksynth_empty_existing)
+set(_struckroom_empty_content "typedef int struckroom_empty_translation_unit_marker;\n")
+set(_struckroom_empty_existing "")
+if(EXISTS "${STRUCKROOM_EMPTY_SOURCE}")
+    file(READ "${STRUCKROOM_EMPTY_SOURCE}" _struckroom_empty_existing)
 endif()
-if(NOT _strucksynth_empty_existing STREQUAL _strucksynth_empty_content)
-    file(WRITE "${STRUCKSYNTH_EMPTY_SOURCE}" "${_strucksynth_empty_content}")
+if(NOT _struckroom_empty_existing STREQUAL _struckroom_empty_content)
+    file(WRITE "${STRUCKROOM_EMPTY_SOURCE}" "${_struckroom_empty_content}")
 endif()
 
-add_library(StruckSynth MODULE "${STRUCKSYNTH_EMPTY_SOURCE}")
-target_link_libraries(StruckSynth PRIVATE strucksynth_core)
-strucksynth_force_load_whole_archive(StruckSynth strucksynth_core)
+add_library(StruckRoom MODULE "${STRUCKROOM_EMPTY_SOURCE}")
+target_link_libraries(StruckRoom PRIVATE struckroom_core)
+struckroom_force_load_whole_archive(StruckRoom struckroom_core)
 
 if(APPLE)
-    set_target_properties(StruckSynth PROPERTIES
+    set_target_properties(StruckRoom PROPERTIES
         BUNDLE TRUE
         BUNDLE_EXTENSION "clap"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.unlikelyware.strucksynth"
-        MACOSX_BUNDLE_BUNDLE_NAME "StruckSynth"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.unlikelyware.struckroom"
+        MACOSX_BUNDLE_BUNDLE_NAME "StruckRoom"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}")
 else()
-    set_target_properties(StruckSynth PROPERTIES PREFIX "" SUFFIX ".clap")
+    set_target_properties(StruckRoom PROPERTIES PREFIX "" SUFFIX ".clap")
 endif()
 
 # --- install: symlink the built .clap into the user CLAP dir ---------------
 # A separate target (mirroring PlainOldSynth), not a POST_BUILD step, so an ordinary `ninja` build
 # never writes outside the build tree. rm -rf first: create_symlink cannot replace a real bundle
-# directory, and older DPF-based builds left a symlink to build/bin/StruckSynth.clap behind.
+# directory, and older DPF-based builds left a symlink to build/bin/StruckRoom.clap behind.
 if(APPLE)
-    set(STRUCKSYNTH_CLAP_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/CLAP")
-    set(STRUCKSYNTH_CLAP_ARTIFACT "$<TARGET_BUNDLE_DIR:StruckSynth>")
+    set(STRUCKROOM_CLAP_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/CLAP")
+    set(STRUCKROOM_CLAP_ARTIFACT "$<TARGET_BUNDLE_DIR:StruckRoom>")
 else()
-    set(STRUCKSYNTH_CLAP_DIR "$ENV{HOME}/.clap")
-    set(STRUCKSYNTH_CLAP_ARTIFACT "$<TARGET_FILE:StruckSynth>")
+    set(STRUCKROOM_CLAP_DIR "$ENV{HOME}/.clap")
+    set(STRUCKROOM_CLAP_ARTIFACT "$<TARGET_FILE:StruckRoom>")
 endif()
 add_custom_target(install-clap
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKSYNTH_CLAP_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKSYNTH_CLAP_DIR}/StruckSynth.clap"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKROOM_CLAP_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKROOM_CLAP_DIR}/StruckRoom.clap"
     COMMAND ${CMAKE_COMMAND} -E create_symlink
-        "${STRUCKSYNTH_CLAP_ARTIFACT}"
-        "${STRUCKSYNTH_CLAP_DIR}/StruckSynth.clap"
-    DEPENDS StruckSynth
+        "${STRUCKROOM_CLAP_ARTIFACT}"
+        "${STRUCKROOM_CLAP_DIR}/StruckRoom.clap"
+    DEPENDS StruckRoom
     VERBATIM
-    COMMENT "Symlinking StruckSynth.clap into ${STRUCKSYNTH_CLAP_DIR}")
+    COMMENT "Symlinking StruckRoom.clap into ${STRUCKROOM_CLAP_DIR}")
 
 # --- VST3 / AUv2 via the vendored clap-wrapper, wrapping the very same CLAP ------------------
 # Purely additive: neither block touches the .clap target above. As PlainOldSynth.
-if(STRUCKSYNTH_BUILD_VST3 OR STRUCKSYNTH_BUILD_AUV2)
+if(STRUCKROOM_BUILD_VST3 OR STRUCKROOM_BUILD_AUV2)
     if(NOT CLAP_SDK_ROOT)
         set(CLAP_SDK_ROOT "${CMAKE_SOURCE_DIR}/external/clap" CACHE PATH "" FORCE)
     endif()
     add_subdirectory(external/clap-wrapper)
 endif()
 
-if(STRUCKSYNTH_BUILD_VST3)
+if(STRUCKROOM_BUILD_VST3)
     if(NOT VST3_SDK_ROOT)
         set(VST3_SDK_ROOT "${CMAKE_SOURCE_DIR}/external/vst3sdk" CACHE PATH "" FORCE)
     endif()
 
-    add_library(StruckSynth_vst3 MODULE "${STRUCKSYNTH_EMPTY_SOURCE}")
+    add_library(StruckRoom_vst3 MODULE "${STRUCKROOM_EMPTY_SOURCE}")
     if(UNIX AND NOT APPLE)
         # clap-wrapper's Linux branch tests a misspelled TCLP_RESOURCE_DIRECTORY, which is never
         # set, so it always warns that RESOURCE_DIRECTORY is unsupported. Defining it empty
         # silences that; we pass no RESOURCE_DIRECTORY.
         set(TCLP_RESOURCE_DIRECTORY "")
     endif()
-    target_link_libraries(StruckSynth_vst3 PRIVATE strucksynth_core)
-    strucksynth_force_load_whole_archive(StruckSynth_vst3 strucksynth_core)
+    target_link_libraries(StruckRoom_vst3 PRIVATE struckroom_core)
+    struckroom_force_load_whole_archive(StruckRoom_vst3 struckroom_core)
     target_add_vst3_wrapper(
-        TARGET StruckSynth_vst3
-        OUTPUT_NAME "StruckSynth"
-        BUNDLE_IDENTIFIER "com.unlikelyware.strucksynth.vst3"
+        TARGET StruckRoom_vst3
+        OUTPUT_NAME "StruckRoom"
+        BUNDLE_IDENTIFIER "com.unlikelyware.struckroom.vst3"
         BUNDLE_VERSION "${PROJECT_VERSION}")
     if(TARGET base-sdk-vst3 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         # The VST3 SDK still uses std::wstring_convert, deprecated since C++17.
@@ -253,31 +253,31 @@ if(STRUCKSYNTH_BUILD_VST3)
     # Hosts want the bundle folder. On Linux $<TARGET_FILE> is the .so inside it; clap-wrapper
     # builds the bundle in build/Release (or build/Debug). As Retune 9a2b6eb.
     if(APPLE)
-        set(STRUCKSYNTH_VST3_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3")
-        set(STRUCKSYNTH_VST3_ARTIFACT "$<TARGET_BUNDLE_DIR:StruckSynth_vst3>")
+        set(STRUCKROOM_VST3_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3")
+        set(STRUCKROOM_VST3_ARTIFACT "$<TARGET_BUNDLE_DIR:StruckRoom_vst3>")
     else()
-        set(STRUCKSYNTH_VST3_DIR "$ENV{HOME}/.vst3")
-        set(STRUCKSYNTH_VST3_ARTIFACT
-            "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/StruckSynth.vst3")
+        set(STRUCKROOM_VST3_DIR "$ENV{HOME}/.vst3")
+        set(STRUCKROOM_VST3_ARTIFACT
+            "${CMAKE_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/StruckRoom.vst3")
     endif()
     add_custom_target(install-vst3
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKSYNTH_VST3_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKSYNTH_VST3_DIR}/StruckSynth.vst3"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKROOM_VST3_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKROOM_VST3_DIR}/StruckRoom.vst3"
         COMMAND ${CMAKE_COMMAND} -E create_symlink
-            "${STRUCKSYNTH_VST3_ARTIFACT}"
-            "${STRUCKSYNTH_VST3_DIR}/StruckSynth.vst3"
-        DEPENDS StruckSynth_vst3
+            "${STRUCKROOM_VST3_ARTIFACT}"
+            "${STRUCKROOM_VST3_DIR}/StruckRoom.vst3"
+        DEPENDS StruckRoom_vst3
         VERBATIM
-        COMMENT "Symlinking StruckSynth.vst3 into ${STRUCKSYNTH_VST3_DIR}")
+        COMMENT "Symlinking StruckRoom.vst3 into ${STRUCKROOM_VST3_DIR}")
 endif()
 
-if(STRUCKSYNTH_BUILD_AUV2)
+if(STRUCKROOM_BUILD_AUV2)
     # AUv2 is an Apple-only format, and clap-wrapper's target_add_auv2_wrapper does not exist off
     # Apple platforms. Say so plainly instead of failing with an unknown-command error.
     if(NOT APPLE)
         message(FATAL_ERROR
-            "STRUCKSYNTH_BUILD_AUV2 is macOS-only (AUv2 is an Apple plugin format). "
-            "Reconfigure with -DSTRUCKSYNTH_BUILD_AUV2=OFF.")
+            "STRUCKROOM_BUILD_AUV2 is macOS-only (AUv2 is an Apple plugin format). "
+            "Reconfigure with -DSTRUCKROOM_BUILD_AUV2=OFF.")
     endif()
     # clap-wrapper fetches Apple's AudioUnitSDK itself (CPM) unless pointed at a local copy with
     # -DAUDIOUNIT_SDK_ROOT=...
@@ -285,31 +285,31 @@ if(STRUCKSYNTH_BUILD_AUV2)
         set(CLAP_WRAPPER_DOWNLOAD_DEPENDENCIES ON)
     endif()
 
-    add_library(StruckSynth_auv2 MODULE "${STRUCKSYNTH_EMPTY_SOURCE}")
-    target_link_libraries(StruckSynth_auv2 PRIVATE strucksynth_core)
-    strucksynth_force_load_whole_archive(StruckSynth_auv2 strucksynth_core)
-    # "StSy" (StruckSynth) as the subtype, under Unlikelyware's own "nLKL" manufacturer code.
+    add_library(StruckRoom_auv2 MODULE "${STRUCKROOM_EMPTY_SOURCE}")
+    target_link_libraries(StruckRoom_auv2 PRIVATE struckroom_core)
+    struckroom_force_load_whole_archive(StruckRoom_auv2 struckroom_core)
+    # "StRm" (StruckRoom) as the subtype, under Unlikelyware's own "nLKL" manufacturer code.
     target_add_auv2_wrapper(
-        TARGET StruckSynth_auv2
-        OUTPUT_NAME "StruckSynth"
-        BUNDLE_IDENTIFIER "com.unlikelyware.strucksynth.auv2"
+        TARGET StruckRoom_auv2
+        OUTPUT_NAME "StruckRoom"
+        BUNDLE_IDENTIFIER "com.unlikelyware.struckroom.auv2"
         BUNDLE_VERSION "${PROJECT_VERSION}"
         MANUFACTURER_NAME "Unlikelyware"
         MANUFACTURER_CODE "nLKL"
-        SUBTYPE_CODE "StSy"
+        SUBTYPE_CODE "StRm"
         INSTRUMENT_TYPE "aumu")
 
     # A copy, not a symlink: AU hosts don't reliably find symlinked components.
-    set(STRUCKSYNTH_AUV2_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/Components")
+    set(STRUCKROOM_AUV2_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/Components")
     add_custom_target(install-auv2
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKSYNTH_AUV2_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKSYNTH_AUV2_DIR}/StruckSynth.component"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKROOM_AUV2_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKROOM_AUV2_DIR}/StruckRoom.component"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "$<TARGET_BUNDLE_DIR:StruckSynth_auv2>"
-            "${STRUCKSYNTH_AUV2_DIR}/StruckSynth.component"
-        DEPENDS StruckSynth_auv2
+            "$<TARGET_BUNDLE_DIR:StruckRoom_auv2>"
+            "${STRUCKROOM_AUV2_DIR}/StruckRoom.component"
+        DEPENDS StruckRoom_auv2
         VERBATIM
-        COMMENT "Copying StruckSynth.component into ${STRUCKSYNTH_AUV2_DIR}")
+        COMMENT "Copying StruckRoom.component into ${STRUCKROOM_AUV2_DIR}")
 endif()
 
 # --- self-tests (the framework; headless, no DAW) --------------------------
@@ -351,7 +351,7 @@ target_include_directories(ss-bend-test PRIVATE external/clap/include)   # clap_
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     # pm-selftest only pulls in light headers → fully strict (optionally -Werror in CI).
     target_compile_options(pm-selftest PRIVATE -Wall -Wextra)
-    if(STRUCKSYNTH_WERROR)
+    if(STRUCKROOM_WERROR)
         target_compile_options(pm-selftest PRIVATE -Werror)
     endif()
     # tests that pull in vendored headers → relaxed (unused params in inline methods).
@@ -402,16 +402,16 @@ set_tests_properties(ss-bend PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 add_executable(ss-clap-host-test test/ss_clap_host_test.cpp)
 target_include_directories(ss-clap-host-test PRIVATE
     external/clap/include             # <clap/clap.h>
-    plugin)                           # StruckSynthParams.h (parameter ids/enums)
+    plugin)                           # StruckRoomParams.h (parameter ids/enums)
 # dlopen/dlsym/dlclose: on glibc before 2.34 these live in libdl, so ask CMake for the right library
 # rather than assuming it is part of libc (it is not, on older Linux distributions).
 target_link_libraries(ss-clap-host-test PRIVATE ${CMAKE_DL_LIBS})
-add_dependencies(ss-clap-host-test StruckSynth)
+add_dependencies(ss-clap-host-test StruckRoom)
 
 if(APPLE)
-    set(STRUCKSYNTH_CLAP_UNDER_TEST "$<TARGET_BUNDLE_DIR:StruckSynth>")
+    set(STRUCKROOM_CLAP_UNDER_TEST "$<TARGET_BUNDLE_DIR:StruckRoom>")
 else()
-    set(STRUCKSYNTH_CLAP_UNDER_TEST "$<TARGET_FILE:StruckSynth>")
+    set(STRUCKROOM_CLAP_UNDER_TEST "$<TARGET_FILE:StruckRoom>")
 endif()
-add_test(NAME ss-clap COMMAND ss-clap-host-test "${STRUCKSYNTH_CLAP_UNDER_TEST}")
+add_test(NAME ss-clap COMMAND ss-clap-host-test "${STRUCKROOM_CLAP_UNDER_TEST}")
 set_tests_properties(ss-clap PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")

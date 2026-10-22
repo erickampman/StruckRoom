@@ -1,14 +1,14 @@
 // PresetKeys.hpp — the plugin-param ↔ preset-JSON-field mapping, shared by the dev-only JSON
 // dumper (PresetDump.hpp) and the always-on preset loader (GeneratedPresets.h resolution in
-// StruckSynthUI.cpp). Kept in its own always-compiled header (not gated by STRUCKSYNTH_PRESET_DUMP)
+// StruckRoomUI.cpp). Kept in its own always-compiled header (not gated by STRUCKROOM_PRESET_DUMP)
 // since preset loading must work in every build, not just dev builds.
 
-#ifndef STRUCKSYNTH_PRESETKEYS_HPP
-#define STRUCKSYNTH_PRESETKEYS_HPP
+#ifndef STRUCKROOM_PRESETKEYS_HPP
+#define STRUCKROOM_PRESETKEYS_HPP
 
-#include "StruckSynthParams.h"
+#include "StruckRoomParams.h"
 
-namespace strucksynth {
+namespace struckroom {
 
 struct PresetKey { const char* module; const char* item; };
 
@@ -45,6 +45,6 @@ static constexpr PresetKey kPresetKeys[kParamCount] = {
    /*TimbreToPos*/     {"Expression", "timbreToPos"},
 };
 
-} // namespace strucksynth
+} // namespace struckroom
 
-#endif // STRUCKSYNTH_PRESETKEYS_HPP
+#endif // STRUCKROOM_PRESETKEYS_HPP

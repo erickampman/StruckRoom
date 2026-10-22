@@ -3,7 +3,7 @@
 //
 //  Pressure (aftertouch) → a held 0..1 control value. Vendored from PolygraphModularUnified's
 //  ChannelPressureModule; PlainOldSynth extends it so it is the per-voice "Pressure" modulation
-//  source. StruckSynth takes PlainOldSynth's version and feeds it to ModalBank's decay (the Press>Decay
+//  source. StruckRoom takes PlainOldSynth's version and feeds it to ModalBank's decay (the Press>Decay
 //  knob; see VoiceManager::buildDefaultPatch). PlainOldSynth's extensions:
 //
 //  - Polyphonic key pressure (UMP status 0xA, MIDI 1.0 0xA0, CLAP's Pressure note expression). One
@@ -104,7 +104,7 @@ void MIDIChannelPressure(const pm::UmpMessage& message, Module* module)
         st->channel = message.channel & 0x0F;
         st->hasNotePressure = false;
         st->released = false;
-        st->ramp.snapNext();   // every note-on re-strikes in StruckSynth, so start at the new value
+        st->ramp.snapNext();   // every note-on re-strikes in StruckRoom, so start at the new value
         break;
     case pm::kStatusChannelPressure:
         st->channelPressure[message.group & 0x0F][message.channel & 0x0F] = unitFromWord(message.data32);

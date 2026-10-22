@@ -1,4 +1,4 @@
-// src/plugin.cpp — StruckSynth: the CLAP plugin (host glue + DSP) for a modal-synthesis voice:
+// src/plugin.cpp — StruckRoom: the CLAP plugin (host glue + DSP) for a modal-synthesis voice:
 // Strike (exciter) → ModalBank (resonator) → Final, driven by the vendored PolygraphModular
 // VoiceManager (the same engine the self-tests exercise).
 //
@@ -7,10 +7,10 @@
 // ---------------------------------------------------------------------------------------------
 // DPF's generated CLAP wrapper cannot receive MIDI 2.0 7.9-pitch note events: it advertises only
 // CLAP_NOTE_DIALECT_MIDI | CLAP_NOTE_DIALECT_MIDI_MPE (dpf/distrho/src/DistrhoPluginCLAP.cpp) and
-// drops CLAP_EVENT_MIDI2 on the floor ("case CLAP_EVENT_MIDI2: break;"). StruckSynth must accept
+// drops CLAP_EVENT_MIDI2 on the floor ("case CLAP_EVENT_MIDI2: break;"). StruckRoom must accept
 // them, so it implements the clap_plugin_entry itself, exactly as PlainOldSynth and
 // PolygraphModularUnified do, and uses DPF only for the GUI (UIExporter + NanoVG, see
-// src/UI/StruckSynthUI.cpp).
+// src/UI/StruckRoomUI.cpp).
 //
 // The MIDI 2.0 path, end to end:
 //   note-ports extension advertises CLAP | MIDI | MIDI2, preferring MIDI2
@@ -36,7 +36,7 @@
 #include <memory>
 #include <string>
 
-#include "StruckSynthParams.h"
+#include "StruckRoomParams.h"
 #include "VoiceManager.hpp"
 #include "clap_ump.h"
 #include "pm_addresses.h"
@@ -44,13 +44,13 @@
 #include "pm_params.h"
 #include "plugin_gui.h"
 
-#ifndef STRUCKSYNTH_VERSION_STRING
-#define STRUCKSYNTH_VERSION_STRING "0.0.0"
+#ifndef STRUCKROOM_VERSION_STRING
+#define STRUCKROOM_VERSION_STRING "0.0.0"
 #endif
 
 namespace {
 
-using namespace strucksynth;
+using namespace struckroom;
 
 // ---------------------------------------------------------------------------------------------
 // Parameter plumbing
@@ -624,7 +624,7 @@ bool params_get_info(const clap_plugin_t*, uint32_t index, clap_param_info_t* in
     info->max_value     = spec.max;
     info->default_value = spec.def;
     std::strncpy(info->name, spec.name, sizeof(info->name) - 1);
-    std::strncpy(info->module, "StruckSynth", sizeof(info->module) - 1);
+    std::strncpy(info->module, "StruckRoom", sizeof(info->module) - 1);
     return true;
 }
 
@@ -686,7 +686,7 @@ const clap_plugin_params_t kParamsExt = {
 // state extension
 // ---------------------------------------------------------------------------------------------
 // A tiny line-based text format rather than JSON, so the DSP side has no parser dependency:
-//     StruckSynth 1
+//     StruckRoom 1
 //     <symbol> <value>
 //     ...
 // Parameters are keyed by symbol, so adding/reordering parameters can never misinterpret an old
@@ -705,7 +705,7 @@ bool streamWrite(const clap_ostream_t* stream, const void* data, uint64_t size) 
 bool state_save(const clap_plugin_t* plugin, const clap_ostream_t* stream) {
     Plugin* p = self(plugin);
     p->scratch.clear();
-    p->scratch += "StruckSynth 1\n";
+    p->scratch += "StruckRoom 1\n";
     char line[128];
     for (uint32_t i = 0; i < uint32_t(kParamCount); ++i) {
         std::snprintf(line, sizeof(line), "%s %.9g\n", kParams[i].symbol,
@@ -715,7 +715,7 @@ bool state_save(const clap_plugin_t* plugin, const clap_ostream_t* stream) {
     return streamWrite(stream, p->scratch.data(), p->scratch.size());
 }
 
-// Host sessions saved while StruckSynth was built with dpf_add_plugin carry DPF's auto-generated
+// Host sessions saved while StruckRoom was built with dpf_add_plugin carry DPF's auto-generated
 // state blob — NUL-separated tokens, because DPF writes "\xff" separators and then replaces them:
 //     __dpf_parameters_begin__ \0 symbol \0 value \0 ... __dpf_parameters_end__ \0 \xfe
 // DPF emitted that even with DISTRHO_PLUGIN_WANT_STATE 0, so parse it and keep those sessions
@@ -764,7 +764,7 @@ bool state_load(const clap_plugin_t* plugin, const clap_istream_t* stream) {
     // Idempotent hosts and validators both rely on this distinction.
     const size_t firstBreak = text.find('\n');
     const std::string header = text.substr(0, firstBreak == std::string::npos ? text.size() : firstBreak);
-    if (header.rfind("StruckSynth", 0) != 0) {
+    if (header.rfind("StruckRoom", 0) != 0) {
         if (!stateLoadDpfParameters(p, text)) return false;
         applyAllParams(p);
         notifyHostValuesChanged(p);
@@ -864,13 +864,13 @@ const char* kFeatures[] = {
 
 const clap_plugin_descriptor_t kDescriptor = {
     .clap_version = CLAP_VERSION_INIT,
-    .id           = "com.unlikelyware.strucksynth",
-    .name         = "StruckSynth",
+    .id           = "com.unlikelyware.struckroom",
+    .name         = "StruckRoom",
     .vendor       = "Unlikelyware",
     .url          = "https://unlikelyware.com",
     .manual_url   = "",
     .support_url  = "",
-    .version      = STRUCKSYNTH_VERSION_STRING,
+    .version      = STRUCKROOM_VERSION_STRING,
     .description  = "Modal-synthesis (struck-resonator) instrument: a Strike exciter driving a "
                     "ModalBank resonator, built on the PolygraphModular voice engine.",
     .features     = kFeatures,

@@ -1,4 +1,4 @@
-// test/ss_clap_host_test.cpp — drives the ACTUAL built StruckSynth.clap through the CLAP C API, with
+// test/ss_clap_host_test.cpp — drives the ACTUAL built StruckRoom.clap through the CLAP C API, with
 // no DAW and no GUI. This is the end-to-end proof of the thing that matters most here: that a MIDI
 // 2.0 NoteOn carrying a 7.9-pitch attribute survives the plugin's note port, reaches the resonator's
 // pitch converter, and comes back out at the right (microtonal) frequency.
@@ -17,7 +17,7 @@
 // Absolute frequency is reported and sanity-checked loosely, since the resonator's fundamental is
 // the engine's business, not this test's.
 //
-// Usage: ss-clap-host-test /path/to/StruckSynth.clap
+// Usage: ss-clap-host-test /path/to/StruckRoom.clap
 // Prints "ALL PASS" on success.
 
 #include <clap/clap.h>
@@ -31,9 +31,9 @@
 #include <string>
 #include <vector>
 
-#include "StruckSynthParams.h"   // parameter ids/enums; header-only, nothing is linked from it
+#include "StruckRoomParams.h"   // parameter ids/enums; header-only, nothing is linked from it
 
-using namespace strucksynth;
+using namespace struckroom;
 
 namespace {
 
@@ -202,7 +202,7 @@ struct Instance {
     }
 };
 
-// Both output channels; StruckSynth's stereo width is a mid/side pass over the summed voice, so at
+// Both output channels; StruckRoom's stereo width is a mid/side pass over the summed voice, so at
 // spread = 0 both channels carry the same mono signal.
 struct StereoAudio {
     std::vector<float> left, right;
@@ -419,7 +419,7 @@ double pitchOfNote(Library& lib, const clap_event_header_t* noteEvent, double ex
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::fprintf(stderr, "usage: %s /path/to/StruckSynth.clap\n", argv[0]);
+        std::fprintf(stderr, "usage: %s /path/to/StruckRoom.clap\n", argv[0]);
         return 2;
     }
 
@@ -429,8 +429,8 @@ int main(int argc, char** argv) {
 
     std::printf("descriptor: id=%s name=%s vendor=%s\n",
                 lib.descriptor->id, lib.descriptor->name, lib.descriptor->vendor);
-    check(std::strcmp(lib.descriptor->id, "com.unlikelyware.strucksynth") == 0, "descriptor id");
-    check(std::strcmp(lib.descriptor->name, "StruckSynth") == 0, "descriptor name");
+    check(std::strcmp(lib.descriptor->id, "com.unlikelyware.struckroom") == 0, "descriptor id");
+    check(std::strcmp(lib.descriptor->name, "StruckRoom") == 0, "descriptor name");
 
     // --- audio ports -----------------------------------------------------------------------------
     {

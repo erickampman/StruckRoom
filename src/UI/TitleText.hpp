@@ -1,9 +1,9 @@
-// TitleText.hpp — the "StruckSynth" wordmark: "Struck" and "Synth" drawn in two accent colors using the
+// TitleText.hpp — the "StruckRoom" wordmark: "Struck" and "Synth" drawn in two accent colors using the
 // embedded Almendra display font (see EmbeddedResources.hpp / Resources/Almendra-Regular.ttf).
 // Sits between the logo and the Preset dropdown in the top strip. Not interactive.
 
-#ifndef STRUCKSYNTH_TITLETEXT_HPP
-#define STRUCKSYNTH_TITLETEXT_HPP
+#ifndef STRUCKROOM_TITLETEXT_HPP
+#define STRUCKROOM_TITLETEXT_HPP
 
 #include "NanoVG.hpp"
 
@@ -54,4 +54,4 @@ private:
 
 END_NAMESPACE_DGL
 
-#endif // STRUCKSYNTH_TITLETEXT_HPP
+#endif // STRUCKROOM_TITLETEXT_HPP

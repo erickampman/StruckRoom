@@ -2,11 +2,11 @@
   <a href="https://www.unlikelyware.com" target="_blank" rel="noopener noreferrer">
     <img src="Unlikelyware.png" alt="Unlikelyware" style="width: 56px; height: auto; border-radius: 10px; margin: 0; display: block;">
   </a>
-  <h1 style="margin: 0;">StruckSynth</h1>
+  <h1 style="margin: 0;">StruckRoom</h1>
 </div>
 
 <p>
-  <em>StruckSynth is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em>
+  <em>StruckRoom is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em>
 </p>
 
 ~~~note [card]
@@ -20,7 +20,7 @@
 ~~~note [card]
 (#overview)
 ## Overview
-StruckSynth is a **modal-synthesis instrument**: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.
+StruckRoom is a **modal-synthesis instrument**: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.
 
 Each note goes through three stages:
 1. **Strike** makes a short excitation burst: a smooth mallet bump or a burst of noise, from a single sample long (the hardest, brightest hit) to about 20 ms or 1.6 periods of the note (the softest).
@@ -32,7 +32,7 @@ Each note goes through three stages:
 ~~~note [card]
 (#getting-started)
 ## Getting Started
-1. **Load StruckSynth** on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).
+1. **Load StruckRoom** on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).
 2. **Play.** The default patch (the same as the **Init** preset) is a free-free metal bar with a 2-second decay.
 3. **Pick a preset** from the **Preset** menu at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.
 4. **Change the object** with **Material** in the Object panel, and watch the spectrum at the top left redraw.
@@ -178,7 +178,7 @@ What a controller's **pressure** and **timbre** do to a note. Each knob is 0 by 
 
 **Sustain pedal** (CC 64) holds released notes in the Poly modes. Since a struck note rings on anyway, the pedal mostly matters for what still controls the note: see *Released notes* below.
 
-**MIDI 2.0 first.** StruckSynth prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; **Vel>Level** decides how loud it is.
+**MIDI 2.0 first.** StruckRoom prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; **Vel>Level** decides how loud it is.
 
 **A note is note number + channel + group.** The same key on two channels is two independent notes.
 ~~~
@@ -191,7 +191,7 @@ What a controller's **pressure** and **timbre** do to a note. Each knob is 0 by 
 - Per-note bend resets on each note-on. One sent before its note-on is ignored.
 ~~~
 ~~~disclosure MPE [disclosure-title subtle]
-With **MPE** on, StruckSynth treats its input as an MPE **lower zone**: channel 1 is the master channel, 2–16 are the member channels, one per note. StruckSynth only receives MPE; it never sends it.
+With **MPE** on, StruckRoom treats its input as an MPE **lower zone**: channel 1 is the master channel, 2–16 are the member channels, one per note. StruckRoom only receives MPE; it never sends it.
 - A member channel's bend range is **±48 semitones** by default, and the master channel's bend (±2) is added to every note, so the controller's pitch wheel moves everything on top of each note's own slide.
 - RPN 0 on any member channel sets the range of all of them.
 - Pressure and timbre (CC 74) drive the [Expression](#expression) knobs. A member note takes the higher of its own value and the master channel's.
@@ -208,7 +208,7 @@ Hosts such as Bitwig send per-note expression as CLAP note expressions:
 - **Pressure** and **Brightness** drive the [Expression](#expression) knobs' pressure and timbre.
 - Volume, Pan, Vibrato and Expression (the CLAP expression of that name) are ignored.
 
-For a note the host sends as a CLAP note, StruckSynth reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.
+For a note the host sends as a CLAP note, StruckRoom reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.
 ~~~
 ~~~disclosure All Notes Off and All Sound Off [disclosure-title subtle]
 - **All Notes Off (CC 123)** releases every note on the channel it arrives on, pedal-held ones included. They ring out like any released note.
@@ -229,7 +229,7 @@ The **Preset** menu at the top right holds the factory presets, in alphabetical 
 
 - **Choosing a preset sets every sound parameter**, Voices and the Expression knobs included. It leaves the **MPE** switch alone.
 - The menu shows **--** until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.
-- There's no way to save your own presets in StruckSynth: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.
+- There's no way to save your own presets in StruckRoom: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.
 ~~~
 ~~~note [card]
 (#tips)
@@ -255,5 +255,5 @@ The **Preset** menu at the top right holds the factory presets, in alphabetical 
 - **The Expression knobs do nothing.** The controller isn't sending pressure or CC 74, or the knobs are at 0.
 - **Bends are huge.** MPE is on and the controller isn't an MPE controller: member channels bend ±48 semitones. Turn **MPE** off.
 - **Distortion.** Lower **Level**. Many loud notes ringing together add up.
-- **A rebuilt StruckSynth doesn't show its changes.** Quit and restart the host: a running host keeps the plugin it loaded first.
+- **A rebuilt StruckRoom doesn't show its changes.** Quit and restart the host: a running host keeps the plugin it loaded first.
 ~~~

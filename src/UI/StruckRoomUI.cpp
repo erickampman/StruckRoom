@@ -1,4 +1,4 @@
-// StruckSynthUI.cpp — the modal-synthesis front end. Five grouped panels (Global, Strike, Object,
+// StruckRoomUI.cpp — the modal-synthesis front end. Five grouped panels (Global, Strike, Object,
 // Decay, Timbre/Output) of reusable Knob/Dropdown controls, plus a live ModalSpectrum visual that
 // drives the real framework-free ModalBank core (linked via pm_framework) to draw the current
 // mode layout and per-mode decay. No presets / IFS pads / mod-matrix — this is the v1 modal voice.
@@ -27,19 +27,19 @@
 #include "Logo.hpp"
 #include "PopupMenu.hpp"
 #include "PresetKeys.hpp"         // param -> preset-JSON key map, shared with the dumper
-#include "PresetDump.hpp"         // dev-only JSON patch dumper (no-op unless STRUCKSYNTH_PRESET_DUMP=1)
+#include "PresetDump.hpp"         // dev-only JSON patch dumper (no-op unless STRUCKROOM_PRESET_DUMP=1)
 
 #include "ModalBank.hpp"        // framework-free core, for the spectrum visual
 #include "ModalGenerators.hpp"  // procedural mode series
 #include "ModalMaterials.hpp"   // static material tables + kModalStretchValues
 #include "CPPTypes.hpp"         // DEFAULT_SAMPLE_RATE (the UIExporter's nominal rate below)
 #include "pm_params.h"          // ModalBankMaterial / MODAL_BANK_FIRST_GENERATOR
-#include "StruckSynthParams.h"
+#include "StruckRoomParams.h"
 #include "plugin_gui.h"         // the C seam to src/plugin.cpp (the raw CLAP plugin)
 
 START_NAMESPACE_DISTRHO
 
-using namespace strucksynth;  // params (kParams, ParamIndex, kMaterialNames)
+using namespace struckroom;  // params (kParams, ParamIndex, kMaterialNames)
 
 using DGL_NAMESPACE::Color;
 using DGL_NAMESPACE::Dropdown;
@@ -186,13 +186,13 @@ private:
 };
 
 // --------------------------------------------------------------------------------------------
-class StruckSynthUI : public UI,
+class StruckRoomUI : public UI,
                       public Knob::Callback,
                       public Dropdown::Callback,
                       public PopupMenu::Callback
 {
 public:
-    StruckSynthUI()
+    StruckRoomUI()
         : UI(DISTRHO_UI_DEFAULT_WIDTH, DISTRHO_UI_DEFAULT_HEIGHT)
     {
         setGeometryConstraints(864, 512, true, false); // lock the 1080:640 design ratio (0.8x min)
@@ -263,7 +263,7 @@ public:
 
         // help.html shows the logo as "Unlikelyware.png", so it is written out under that name.
         fHelpButton = std::make_unique<HelpButton>(this, std::vector<HelpButton::File>{
-            { "StruckSynth-help.html", EmbeddedResources::helpData, EmbeddedResources::helpDataSize },
+            { "StruckRoom-help.html", EmbeddedResources::helpData, EmbeddedResources::helpDataSize },
             { "Unlikelyware.png", EmbeddedResources::Unlikelyware_Final_ColorData,
                                   EmbeddedResources::Unlikelyware_Final_ColorDataSize },
         });
@@ -369,7 +369,7 @@ protected:
             textAlign(ALIGN_LEFT | ALIGN_MIDDLE);
             fontSize(22 * s);
             fillColor(Color(224, 190, 150));
-            text(fTitleX, 20 * s, "StruckSynth", nullptr);
+            text(fTitleX, 20 * s, "StruckRoom", nullptr);
             fillColor(Color(150, 154, 162)); fontSize(12 * s);
             text(fTitleX + 132 * s, 22 * s, "modal synthesis", nullptr);
         }
@@ -387,7 +387,7 @@ protected:
         setSize(DISTRHO_UI_DEFAULT_WIDTH, DISTRHO_UI_DEFAULT_HEIGHT);
     }
 
-#if STRUCKSYNTH_PRESET_DUMP
+#if STRUCKROOM_PRESET_DUMP
     // Dev-only: press 'P' to write the current patch as JSON to $HOME (see PresetDump.hpp). fValues
     // already mirrors every param, so it's the patch snapshot.
     bool onKeyboard(const KeyboardEvent& ev) override
@@ -395,7 +395,7 @@ protected:
         if (ev.press && ev.key == 'p')
         {
             const std::string path = dumpPresetToFile(fValues);
-            std::fprintf(stderr, "[StruckSynth] patch %s %s\n",
+            std::fprintf(stderr, "[StruckRoom] patch %s %s\n",
                          path.empty() ? "dump FAILED" : "dumped to", path.c_str());
             return true;
         }
@@ -534,12 +534,12 @@ private:
         }
     }
 
-    // The label lists live in StruckSynthParams.h so the CLAP params extension reports exactly the
+    // The label lists live in StruckRoomParams.h so the CLAP params extension reports exactly the
     // same enums; this just adapts them to the widget's std::vector<std::string> shape.
     static std::vector<std::string> choicesForWidget(uint32_t i)
     {
         std::vector<std::string> v;
-        for (const char* const* c = strucksynth::choicesFor(i); c != nullptr && *c != nullptr; ++c)
+        for (const char* const* c = struckroom::choicesFor(i); c != nullptr && *c != nullptr; ++c)
             v.emplace_back(*c);
         return v;
     }
@@ -598,12 +598,12 @@ private:
     // apart from a per-param dropdown.
     static constexpr uint32_t kPresetDropdownId = kParamCount;
 
-    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StruckSynthUI)
+    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StruckRoomUI)
 };
 
 UI* createUI()
 {
-    return new StruckSynthUI();
+    return new StruckRoomUI();
 }
 
 // ================================================================================================

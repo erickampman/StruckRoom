@@ -1,4 +1,4 @@
-# StruckSynth milestones
+# StruckRoom milestones
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
@@ -22,7 +22,7 @@
 - [x] Linux CI (Ubuntu gcc + clang with -Werror)
 
 ## M3: VST3 / AUv2 via clap-wrapper
-- [x] VST3 (macOS + Linux) and AUv2 (macOS, `aumu StSy nLKL`) through clap-wrapper v0.16.0, wrapping the same CLAP
+- [x] VST3 (macOS + Linux) and AUv2 (macOS, `aumu StRm nLKL`) through clap-wrapper v0.16.0, wrapping the same CLAP
 - [x] VST3 note expressions: Tuning + Brightness offered via `CLAP_PLUGIN_AS_VST3` (Pressure as before)
 - [x] clap-wrapper AUv2 GUI patch carried in `patches/` (calls `gui->show()`, which starts the render timer)
 - [x] Validated on macOS (Xcode 26.3, Ninja, 2026-10-21): ctest 12/12; clap-validator 35 pass, 0 fail;

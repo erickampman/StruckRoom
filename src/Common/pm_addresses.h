@@ -127,11 +127,11 @@ inline constexpr AUParameterAddress finalAddress =
 inline constexpr AUParameterAddress finalInputAddress =
    MODULE_PARAM_ADDRESS(ModuleParamKindFinalOutput, ModuleInstance1, FinalOutputParamItemInput);
 
-// --- StruckSynth: Strike exciter (MIDI note-on → excitation burst) -------------------------
+// --- StruckRoom: Strike exciter (MIDI note-on → excitation burst) -------------------------
 inline constexpr AUParameterAddress strike1Address =
    MODULE_PARAM_ADDRESS(ModuleParamKindStrike, ModuleInstance1, 0);
 
-// --- StruckSynth: ModalBank resonator ------------------------------------------------------
+// --- StruckRoom: ModalBank resonator ------------------------------------------------------
 inline constexpr AUParameterAddress modalBank1Address =
    MODULE_PARAM_ADDRESS(ModuleParamKindModalBank, ModuleInstance1, 0);
 // Excitation input (Strike's output patches here) and pitch-tracking input (from PitchConverter).

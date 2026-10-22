@@ -2,7 +2,7 @@
 //  IFSOscModule.hpp
 //
 //  IFS fractal wavetable oscillator — inherited from IFSynth; instantiated but unconnected
-//  in StruckSynth's voice.
+//  in StruckRoom's voice.
 //  Ported from PolygraphModular's IFSOscModule (AUv3). This IFSynth port is trimmed to the
 //  simple v1 param set (no modulation matrix) and replaces the Apple GCD background wavetable
 //  render with a single-threaded, coalesced render at the top of the process block.

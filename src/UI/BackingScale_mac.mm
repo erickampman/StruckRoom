@@ -7,7 +7,7 @@
 // positions and view frames with the window's CURRENT screen. Sizing the editor from DPF's cached
 // value therefore leaves the drawing and the mouse in different coordinate spaces: a UI drawn at 2x
 // on a 1x screen (huge, clipped), or one that draws but whose controls miss their clicks.
-// StruckSynthUI.cpp sizes from this instead, and re-applies the size whenever it changes.
+// StruckRoomUI.cpp sizes from this instead, and re-applies the size whenever it changes.
 
 #import <Cocoa/Cocoa.h>
 

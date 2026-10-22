@@ -516,7 +516,7 @@ void testHoldsNote() {
 }
 
 // --- MPE (lower zone: master channel 1, members 2..16) and RPN 0 --------------------------------
-// Ported from PlainOldSynth's smoke test (bend only: StruckSynth has no pressure / timbre sources).
+// Ported from PlainOldSynth's smoke test (bend only: StruckRoom has no pressure / timbre sources).
 
 void setMpe(VoiceManager& vm, bool on) {
    vm.setParameter(MODULE_PARAM_ADDRESS(ModuleParamKindPitchBendConverter, ModuleInstance1,
@@ -986,7 +986,7 @@ void testGeneratedNoteOffsMatchChannel() {
 } // namespace
 
 int main() {
-   std::printf("StruckSynth pitch-bend test (%.0f Hz)\n", kSampleRate);
+   std::printf("StruckRoom pitch-bend test (%.0f Hz)\n", kSampleRate);
    testDecode();
    testUnbentPitch();
    testChannelBend();

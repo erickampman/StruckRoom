@@ -1,11 +1,11 @@
-# StruckSynth
+# StruckRoom
 
 A CLAP modal-synthesis instrument: Strike → ModalBank → Final on the vendored PolygraphModular engine
 (`src/Common`, `src/Module`, `src/Voice`), a hand-written CLAP entry point (`src/plugin.cpp`), and DPF
 used only for the GUI (`src/UI/`). Start with README.md and TESTING.md.
 
 Sibling synths, on the same engine and the same raw-CLAP layout. Paths: `~/Dev-Audio/<name>` on the Mac,
-`~/dev/dev-clap/<name>` on the Linux PC (as `docs/BuildNotes.md` in IFSynth and StruckSynth shows):
+`~/dev/dev-clap/<name>` on the Linux PC (as `docs/BuildNotes.md` in IFSynth and StruckRoom shows):
 - **PlainOldSynth** (`~/Dev-Audio/PlainOldSynth`, branch `main`), where most MIDI 2.0 work starts
 - **IFSynth** (`~/Dev-Audio/IFSynth`, branch **`master`**), ported from this repo on 2026-10-12
 
@@ -14,9 +14,9 @@ Sibling synths, on the same engine and the same raw-CLAP layout. Paths: `~/Dev-A
 - Commit to `main` directly. Never open pull requests. Ask before pushing.
 - Ask before anything UI-visible: new parameters, panel controls, dropdown entries.
 - Parameters are **appended**, never inserted: CLAP parameter ids are the indexes. Each new one needs
-  its `symbolIs` check in `plugin/StruckSynthParams.h`. Sound parameters get a preset key and a line in
+  its `symbolIs` check in `plugin/StruckRoomParams.h`. Sound parameters get a preset key and a line in
   every `Presets/*.json`, added as text; controller setup (MPE) stays out of presets.
-- Before each commit: `ctest --test-dir build` and `clap-validator validate build/StruckSynth.clap`.
+- Before each commit: `ctest --test-dir build` and `clap-validator validate build/StruckRoom.clap`.
 - After a rebuild the author must **quit and restart the host** (StageHand, REAPER, Bitwig): a running
   host keeps the binary it first loaded. Say so when asking them to listen.
 
@@ -38,7 +38,7 @@ editor size · `586cee7` per-note bend, registered controller 7, note + channel 
 velocity-0 note-on · `30a1ca6` All Notes Off / All Sound Off · `b43e91b` released notes (MPE §3.3.3) ·
 `72b75ae` Expression panel.
 
-Where StruckSynth differs from PlainOldSynth:
+Where StruckRoom differs from PlainOldSynth:
 - No VCA: the bank's T60 decay is the envelope, so a voice rings on after note-off and NOTE_END comes
   when it falls silent.
 - Bend enters ModalBank through an appended second pitch input (`ModalBankParamItemPitchMod2Input`),
@@ -54,10 +54,10 @@ there and lets the next block apply them; port that.
 ## VST3 and AUv2 (2026-10-21)
 
 Both come from clap-wrapper (`external/clap-wrapper`, v0.16.0) wrapping the same CLAP, following
-`~/Dev-Tools/lockstep-git/SYNTH_WRAPPERS.md` and PlainOldSynth. AUv2 is `aumu StSy nLKL`.
+`~/Dev-Tools/lockstep-git/SYNTH_WRAPPERS.md` and PlainOldSynth. AUv2 is `aumu StRm nLKL`.
 `patches/clap-wrapper--auv2-gui-show.patch` makes the AUv2 view call `gui->show()`, which starts the
 render timer; without it the AU editor stays blank. `kAsVst3Ext` in `src/plugin.cpp` offers VST3 hosts
-Tuning and Brightness note expressions. Before each commit, also `auval -v aumu StSy nLKL` after
+Tuning and Brightness note expressions. Before each commit, also `auval -v aumu StRm nLKL` after
 `ninja -C build install-auv2`.
 
 ## On Linux
@@ -72,17 +72,17 @@ A checkout from before 2026-10-11 is far behind. To catch up:
 1. `git pull` and `tools/fetch_deps.sh` (pinned submodules, only four of the VST3 SDK's, and the
    clap-wrapper patch in `patches/`).
 2. **Configure a fresh build directory** (`rm -rf build`): the move off `dpf_add_plugin` renamed the
-   targets and moved the output to `build/StruckSynth.clap`. Then
-   `cmake --build build --target install-clap` re-points `~/.clap/StruckSynth.clap` at it (it is a
+   targets and moved the output to `build/StruckRoom.clap`. Then
+   `cmake --build build --target install-clap` re-points `~/.clap/StruckRoom.clap` at it (it is a
    separate target, so an ordinary build never writes outside the build tree).
 3. Packages: README's Build section (X11 and GL development headers). If configure or link asks for
    more, PlainOldSynth's README lists the full set its Linux CI installs.
-4. `ctest --test-dir build --output-on-failure`, then `clap-validator validate build/StruckSynth.clap`.
-5. The VST3 is `build/Release/StruckSynth.vst3` on Linux; `install-vst3` links it into `~/.vst3`.
+4. `ctest --test-dir build --output-on-failure`, then `clap-validator validate build/StruckRoom.clap`.
+5. The VST3 is `build/Release/StruckRoom.vst3` on Linux; `install-vst3` links it into `~/.vst3`.
 
 Never checked on Linux, so check these by hand and record what you find in this file:
 - The editor under X11 through the raw CLAP gui extension (`CLAP_WINDOW_API_X11` in
-  `src/UI/StruckSynthUI.cpp`): correct size on load, resizing, clicks landing on the right controls.
+  `src/UI/StruckRoomUI.cpp`): correct size on load, resizing, clicks landing on the right controls.
 - The Presets menu and the logo link.
 - Sound and MIDI in **StageHand** (`~/dev/dev-audio/StageHand`; Linux-first: JACK through PipeWire, the
   ALSA sequencer) and REAPER.

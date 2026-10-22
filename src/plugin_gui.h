@@ -1,8 +1,8 @@
 // plugin_gui.h — the seam between the DSP side (src/plugin.cpp, portable C++ that owns the raw
-// CLAP plugin) and the GUI shell (src/UI/StruckSynthUI.cpp, DPF + NanoVG).
+// CLAP plugin) and the GUI shell (src/UI/StruckRoomUI.cpp, DPF + NanoVG).
 //
 // Neither side includes the other's internals; they meet only at these C-linkage functions. This is
-// the same discipline PlainOldSynth and PolygraphModularUnified use. StruckSynth has a fixed voice
+// the same discipline PlainOldSynth and PolygraphModularUnified use. StruckRoom has a fixed voice
 // graph (no patch matrix), so there is nothing here for graph/patch/catalog snapshots.
 //
 // Provided by plugin.cpp, called by the GUI shell:

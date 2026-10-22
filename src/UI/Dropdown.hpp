@@ -3,8 +3,8 @@
 // PopupMenu (the UI owns the menu so it can draw over every other panel). Identify the bound
 // parameter with Widget::setId(); the UI writes the chosen index back via setIndex().
 
-#ifndef STRUCKSYNTH_DROPDOWN_HPP
-#define STRUCKSYNTH_DROPDOWN_HPP
+#ifndef STRUCKROOM_DROPDOWN_HPP
+#define STRUCKROOM_DROPDOWN_HPP
 
 #include "NanoVG.hpp"
 
@@ -135,4 +135,4 @@ private:
 
 END_NAMESPACE_DGL
 
-#endif // STRUCKSYNTH_DROPDOWN_HPP
+#endif // STRUCKROOM_DROPDOWN_HPP
