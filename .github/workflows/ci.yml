@@ -38,6 +38,14 @@ jobs:
             libxext-dev libxrandr-dev libxcursor-dev \
             libxinerama-dev libxcb1-dev libx11-xcb-dev libxcb-util-dev \
             libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev
+      # fetch_deps.sh's own `git submodule` clones don't get checkout's token, so hand it to git
+      # for the private repos (dpf and its pugl).
+      - name: Credentials for the private submodules
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
+        run: |
+          git config --global url."https://x-access-token:${SUBMODULES_TOKEN}@github.com/erickampman/".insteadOf \
+            "https://github.com/erickampman/"
       # Pinned submodules, only the four vst3sdk submodules the build needs, plus patches/.
       - name: Fetch pinned dependency submodules
         run: tools/fetch_deps.sh
