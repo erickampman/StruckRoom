@@ -3,7 +3,7 @@
 	url = https://github.com/free-audio/clap
 [submodule "dpf"]
 	path = dpf
-	url = https://github.com/DISTRHO/DPF
+	url = https://github.com/erickampman/DPF.git
 [submodule "external/clap-wrapper"]
 	path = external/clap-wrapper
 	url = https://github.com/free-audio/clap-wrapper.git

@@ -26,6 +26,8 @@ jobs:
       CXX: ${{ matrix.cxx }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.SUBMODULES_TOKEN || github.token }}   # dpf + pugl are private forks
       # DPF's pugl/NanoVG UI needs X11 + GL headers; the xcb/xkb/fontconfig packages are what the
       # vendored VST3 SDK looks for on Linux (as PlainOldSynth's CI).
       - name: Install build deps (Linux)
