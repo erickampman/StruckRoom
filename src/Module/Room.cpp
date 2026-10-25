@@ -26,6 +26,11 @@ constexpr double kRingGain = 0.0079;
 
 constexpr double kDefaultArea = 3.0 * 2.2;        // where kLateGain was measured
 
+// Modes whose placement factor (source pressure times the larger of the listener's pressure and
+// velocity) is under this are left out: -40 dB. Measured: 6-11% fewer modes, 5-9% less time, the output
+// changed by -50..-76 dB (-30 dB would save 15-21% for -41..-57 dB).
+constexpr double kModeCull = 1e-2;
+
 // Overall level after the room, so a struck note leaves headroom for chords: the engine's Final
 // stage hard-clips at full scale. Measured: StruckSynth alone peaks near 0.95 on a high Bell at full
 // velocity, and the room adds 30-50% at the strike; at 0.35 a single note peaks near a third of full
@@ -206,6 +211,10 @@ void Room::rebuildGeometry() {
             const double cx = kx / kk, cy = ky / kk;    // direction cosines of its plane waves
             // Particle velocity along x, times rho*c: -(c/omega) d(psi)/dx.
             const double vx = -cx * std::sin(M_PI * nx * s.micX) * psi(ny, s.micY);
+            // Near a node at either end: driven or heard 40 dB below a mode at antinodes at both. The
+            // test is on placement alone (both factors are at most 1 at every frequency), so it thins
+            // the list evenly rather than taking the high modes, which the tilt below makes quieter.
+            if (std::fabs(ps) * std::max(std::fabs(pm), std::fabs(vx)) < kModeCull) continue;
 
             // Green's-function weight: Lambda * psi_s / area, Lambda normalising
             // the cosines. sqrt(f0/f) rather than the 2-D Green's 1/f keeps the

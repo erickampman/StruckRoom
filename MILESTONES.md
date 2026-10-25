@@ -24,6 +24,8 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] Room modes 29% cheaper: each mode's input gain folded into its output gains, so two groups of
       eight fit the baseline's registers (720 -> 510 ns a sample per voice at Detail 12, i3-9100); output
       the same to float rounding (-84..-93 dB; -66 dB after a four-octave mono retune)
+- [x] Room modes driven or heard 40 dB under an antinode left out (5-9% less time); voices freed at
+      -90 dB rather than -100 (11-13% sooner after note-off). Listened: no difference
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
