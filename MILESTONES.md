@@ -11,6 +11,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] Editor tabs: Object / Room (draggable map) / Walls (decay plot)
 - [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
 - [ ] Rename leftovers: help page still describes StruckSynth
+- [ ] Help page: what costs CPU and how to manage it (ReleaseUMP R2-11, which has the numbers)
 - [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
 - [x] Listened to exp5 (2026-10-25): all four go in, one knob each
 - [x] Wall effects in the plugin: Shift, Flex, Rattle, Gap (Rattle's) per wall pair (8 params, appended),
