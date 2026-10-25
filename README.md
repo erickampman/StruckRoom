@@ -38,8 +38,7 @@ room.
 | | Link | On: the wall rings with the energy it absorbed, not the full incident sound |
 | | Shift | frequency shift of the reflections and the wall's ring, % of f0. The near wall shifts up and the far wall down, so the two sides drift against each other. Small values beat slowly; 10% clangs |
 | | Flex | the wall gives under the sound, so its reflection's path, and pitch, bend with the level: soft notes barely, loud ones more |
-| | Clip | soft clipping of the reflection; louder notes clip harder |
-| | Rattle | the wall resonator buzzes once it rings past a gap (needs Ring above 0); fades out as the ring decays |
+| | Rattle, Gap | the wall resonator buzzes once it rings past the gap (needs Ring above 0), and stops as the ring decays inside it. Gap is a share of a full-velocity ring: lower and soft notes rattle too, higher and only the loudest hits do |
 | Global | Width | the M/S pair's side level (was Spread) |
 
 The editor has three tabs. **Object** is the struck object, as in StruckSynth. **Room** shows the

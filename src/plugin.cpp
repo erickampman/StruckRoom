@@ -273,7 +273,7 @@ AUParameterAddress vmAddress(uint32_t paramIndex) {
             return roomParam(RoomParamItem(RoomParamItemSideAbsorb + k));
         }
         // The wall effects, appended: the same four per pair, plugin and module side.
-        if (paramIndex >= kParamSideShift && paramIndex <= kParamFBRattle) {
+        if (paramIndex >= kParamSideShift && paramIndex <= kParamFBGap) {
             const uint32_t k = paramIndex - kParamSideShift;
             static_assert(kParamFBShift - kParamSideShift == kRoomWallFxItems, "wall effect runs disagree");
             return roomParam(RoomParamItem(RoomParamItemSideShift + k));

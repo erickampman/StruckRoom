@@ -35,16 +35,14 @@ constexpr double kOutputTrim = 0.35;
 // Applied settings are rebuilt at most this often while a knob moves.
 constexpr double kRebuildSeconds = 0.03;
 
-// Wall effects. Flex, Clip and Rattle depend on level, so they are set against fixed levels,
+// Wall effects. Flex and Rattle depend on level, so they are set against fixed levels,
 // measured at the default patch and full velocity: kObjectRef is the peak of the room's input (the
 // object's sound), kRingRef the peak of a wall resonator's output before its Ring level. A softer
-// note, or a lower Level, meets a gentler wall. Rattle's gap is a fixed share of kRingRef: in
-// roomlab 0.3 left soft notes never rattling, so it is lower here.
+// note, or a lower Level, meets a gentler wall. Rattle's gap is a share of kRingRef (Gap).
 // Measured through the plugin (Bar, C4, velocity 1, Ring 1): 0.53 and 61. Across String, Bar,
 // Membrane and Bell at C2, C4 and C6 they span 0.24..1.09 and 26..83.
 constexpr float kObjectRef  = 0.5f;
 constexpr float kRingRef    = 60.0f;
-constexpr float kRattleGap  = 0.15f;
 
 // Hilbert pair coefficients (Olli Niemitalo's): two chains of four (a^2 - z^-2) / (1 - a^2 z^-2)
 // sections, 90 degrees apart within 0.7 degrees from about fs/2000 to just under Nyquist. Squared.
@@ -96,8 +94,8 @@ inline double spreadGain(double r) { return 1.0 / std::sqrt(std::max(r, 0.1)); }
 bool sameWall(const Room::Wall& a, const Room::Wall& b) {
     return a.absorb == b.absorb && a.bright == b.bright && a.ring == b.ring && a.ringMat == b.ringMat
         && a.ringRatio == b.ringRatio && a.ringT60 == b.ringT60 && a.ringTilt == b.ringTilt
-        && a.link == b.link && a.shift == b.shift && a.flex == b.flex && a.clip == b.clip
-        && a.rattle == b.rattle;
+        && a.link == b.link && a.shift == b.shift && a.flex == b.flex
+        && a.rattle == b.rattle && a.gap == b.gap;
 }
 
 bool sameSettings(const Room::Settings& a, const Room::Settings& b) {
@@ -360,13 +358,13 @@ ROOM_HOT void Room::retunePitch() {
             mOscSw[k] = (float)(sign * std::sin(dw));
         }
         mFlexK[pair] = (float)((double)w.flex * spl / kObjectRef);
-        mClipK[pair] = w.clip / kObjectRef;
-        mRattleGap[pair] = kRattleGap * kRingRef;
+        const double gap = std::clamp((double)w.gap, 0.0, 0.95);
+        mRattleGap[pair] = (float)(gap * kRingRef);
         // The crossings are differenced into clicks; this scales a full-level ring that crosses its
         // gap at the wall's own frequency back to about the ring's level. Below 50 Hz that scale would
         // grow without bound (the difference of a slow wave is tiny, its clicks are not), so it stops.
         const double wallHz = std::max(50.0, f0 * (double)w.ringRatio);
-        mRattleK[pair] = (float)((double)w.rattle * fs / (2.0 * M_PI * wallHz) / (1.0 - kRattleGap));
+        mRattleK[pair] = (float)((double)w.rattle * fs / (2.0 * M_PI * wallHz) / (1.0 - gap));
         mRattleMax[pair] = w.rattle * kRingRef;
     }
     mFlexA = (float)std::exp(-2.0 * M_PI * std::min(f0, nyquist) / fs);
@@ -514,10 +512,8 @@ ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int 
             const float lp = mLP[k];
             // A wall gives only so far: twice the reference level, so the swing stays within twice Flex.
             mDisp[k] = std::clamp(mFlexA * mDisp[k] + (1.0f - mFlexA) * lp, -2.0f * kObjectRef, 2.0f * kObjectRef);
-            // Clip: unity gain for small signals, toward kObjectRef / drive for loud ones.
-            const float r = lp / (1.0f + mClipK[pair] * std::fabs(lp));
-            m  += mImage[k].gM * r;
-            sd += mImage[k].gS * r;
+            m  += mImage[k].gM * lp;
+            sd += mImage[k].gS * lp;
             if (mRingOn[pair]) {
                 // Linked: the wall rings with what it absorbed, the broadband part
                 // sqrt(absorb) of the low band plus everything the one-pole took.

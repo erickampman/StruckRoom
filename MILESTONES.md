@@ -13,7 +13,11 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [ ] Rename leftovers: help page still describes StruckSynth
 - [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
 - [x] Listened to exp5 (2026-10-25): all four go in, one knob each
-- [x] Wall effects in the plugin: Shift, Flex, Clip, Rattle per wall pair (8 params, appended), third row of the Walls tab
+- [x] Wall effects in the plugin: Shift, Flex, Rattle, Gap (Rattle's) per wall pair (8 params, appended),
+      third row of the Walls tab. Shift Spread (the far wall's shift from opposite to the same way) was
+      tried in Clip's slot and dropped: the direction barely changes the beating, and F/B barely at all.
+      Clip was tried and dropped before release: walls don't clip, it read as distortion rather than a
+      material, it barely followed velocity, and Flex already bends the reflection with level
 - [x] Wall materials: the object's full list (26), generators included
 - [x] By hand: the Walls tab's three rows checked (2026-10-25)
 - [ ] By hand: listen to the wall effects in a host

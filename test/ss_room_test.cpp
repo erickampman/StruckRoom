@@ -44,8 +44,8 @@ Room::Settings randomSettings(std::mt19937& rng) {
         w.link = uni(rng, 0.0f, 1.0f) > 0.5f;
         w.shift = uni(rng, 0.0f, 1.0f) > 0.5f ? uni(rng, 0.0f, 0.1f) : 0.0f;
         w.flex = uni(rng, 0.0f, 1.0f);
-        w.clip = uni(rng, 0.0f, 10.0f);
         w.rattle = uni(rng, 0.0f, 1.0f);
+        w.gap = uni(rng, 0.02f, 0.95f);
     }
     return s;
 }
@@ -69,8 +69,8 @@ Room::Settings edgeSettings(int k) {
         // all taken, so these cycle at co-prime periods: every combination meets every corner.
         w.ringMat = (k % 3 == 0) ? 25 : 3;
         w.shift = (k % 5 == 0) ? 0.1f : 0.0f;
+        w.gap = (k % 11 < 5) ? 0.02f : 0.95f;
         w.flex = w.rattle = (k % 7 < 3) ? 1.0f : 0.0f;
-        w.clip = (k % 7 < 3) ? 10.0f : 0.0f;
     }
     return s;
 }

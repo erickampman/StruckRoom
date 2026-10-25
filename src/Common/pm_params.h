@@ -430,12 +430,12 @@ enum RoomParamItem : NSUInteger {
    RoomParamItemFBLink,
    RoomParamItemSideShift,       // wall effects (appended): side walls, then front/back, the same four
    RoomParamItemSideFlex,
-   RoomParamItemSideClip,
    RoomParamItemSideRattle,
+   RoomParamItemSideGap,
    RoomParamItemFBShift,
    RoomParamItemFBFlex,
-   RoomParamItemFBClip,
    RoomParamItemFBRattle,
+   RoomParamItemFBGap,
 };
 inline constexpr NSUInteger kRoomWallItems = RoomParamItemFBAbsorb - RoomParamItemSideAbsorb;
 inline constexpr NSUInteger kRoomWallFxItems = RoomParamItemFBShift - RoomParamItemSideShift;

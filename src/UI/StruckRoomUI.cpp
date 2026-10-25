@@ -733,11 +733,11 @@ private:
 
     static bool isSideWall(uint32_t i)
     {
-        return (i >= kParamSideAbsorb && i <= kParamSideLink) || (i >= kParamSideShift && i <= kParamSideRattle);
+        return (i >= kParamSideAbsorb && i <= kParamSideLink) || (i >= kParamSideShift && i <= kParamSideGap);
     }
     static bool isFBWall(uint32_t i)
     {
-        return (i >= kParamFBAbsorb && i <= kParamFBLink) || (i >= kParamFBShift && i <= kParamFBRattle);
+        return (i >= kParamFBAbsorb && i <= kParamFBLink) || (i >= kParamFBShift && i <= kParamFBGap);
     }
 
     GroupBox* groupFor(uint32_t i) const

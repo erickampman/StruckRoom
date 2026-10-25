@@ -60,8 +60,8 @@ static Room::Wall readWall(Module* module, uint8_t first, uint8_t fx)
     w.link      = module->getParamValue(first + 7) >= 0.5f;
     w.shift     = module->getParamValue(fx + 0) * 0.01f;   // the parameter is in % of f0
     w.flex      = module->getParamValue(fx + 1);
-    w.clip      = module->getParamValue(fx + 2);
-    w.rattle    = module->getParamValue(fx + 3);
+    w.rattle    = module->getParamValue(fx + 2);
+    w.gap       = module->getParamValue(fx + 3);
     return w;
 }
 

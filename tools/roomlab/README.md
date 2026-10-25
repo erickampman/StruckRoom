@@ -154,9 +154,9 @@ The real-time port in `src/Module/Room.cpp` keeps the model and changes these:
   the two agree at this README's default 3 × 2.2 room.
 - **Modes below 20 Hz are silent**, and **Detail defaults to 12 × f0** (here 32) for CPU.
 - **The room is tuned at each strike** and carries ringing modes over to the new pitch.
-- **Wall effects** (exp5) are in, one knob each per pair: Shift (in % of f0), Flex, Clip, Rattle. The
-  rest is fixed: the shift always reaches the wall resonators, Clip is symmetric (no asym), Rattle's
-  gap is 0.15, and there's no late shift. The level references are constants measured through the
+- **Wall effects** (exp5) are in, one knob each per pair: Shift (in % of f0), Flex, Rattle and its
+  Gap (default 0.15: roomlab's 0.3 left soft notes never rattling). The rest is fixed: the shift
+  always reaches the wall resonators, and there's no late shift. Soft clip was dropped: it sounded like distortion rather than a wall, and barely followed velocity. The level references are constants measured through the
   plugin, not each render's own peak: room input 0.5 and wall ring 60 (Bar, C4, velocity 1). Each
   path runs its own Hilbert pair, and only while Shift is above 0, so the voice needs no second delay
   line. Rattle's click scale stops growing below 50 Hz, and each slap is bounded at Rattle × the ring

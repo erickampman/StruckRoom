@@ -77,12 +77,12 @@ enum ParamIndex {
    // --- Wall effects (appended): side walls, then front/back, the same four each ---
    kParamSideShift,         // frequency shift, % of f0: the near wall up, the far wall down
    kParamSideFlex,          // the wall gives under the sound: delay swing, periods of f0
-   kParamSideClip,          // soft-clip drive on the reflection
    kParamSideRattle,        // the wall resonator buzzes past a gap
+   kParamSideGap,           // that gap, a share of a full-velocity ring: lower, softer notes rattle
    kParamFBShift,
    kParamFBFlex,
-   kParamFBClip,
    kParamFBRattle,
+   kParamFBGap,
    kParamCount
 };
 
@@ -164,13 +164,13 @@ static constexpr ParamSpec kParams[kParamCount] = {
    // Wall effects: side
    {"Side Shift", "sdShift",  "%",   0.0f,  10.0f,   0.0f,  false, false},
    {"Side Flex",  "sdFlex",   "",    0.0f,   1.0f,   0.0f,  false, false},
-   {"Side Clip",  "sdClip",   "",    0.0f,  10.0f,   0.0f,  false, false},
    {"Side Rattle","sdRattle", "",    0.0f,   1.0f,   0.0f,  false, false},
+   {"Side Gap",   "sdGap",    "",    0.02f,  0.95f,  0.15f, false, false},
    // Wall effects: front/back
    {"F/B Shift",  "fbShift",  "%",   0.0f,  10.0f,   0.0f,  false, false},
    {"F/B Flex",   "fbFlex",   "",    0.0f,   1.0f,   0.0f,  false, false},
-   {"F/B Clip",   "fbClip",   "",    0.0f,  10.0f,   0.0f,  false, false},
    {"F/B Rattle", "fbRattle", "",    0.0f,   1.0f,   0.0f,  false, false},
+   {"F/B Gap",    "fbGap",    "",    0.02f,  0.95f,  0.15f, false, false},
 };
 
 // Material picker labels (order matches ModalBankMaterial in pm_params.h). Null-terminated so the
@@ -225,9 +225,9 @@ static_assert(symbolIs(kParamVoiceMode, "voices") && symbolIs(kParamGlide, "glid
               && symbolIs(kParamFBRingRatio, "fbRatio") && symbolIs(kParamFBRingDecay, "fbDecay")
               && symbolIs(kParamFBRingDamp, "fbDamp") && symbolIs(kParamFBLink, "fbLink")
               && symbolIs(kParamSideShift, "sdShift") && symbolIs(kParamSideFlex, "sdFlex")
-              && symbolIs(kParamSideClip, "sdClip") && symbolIs(kParamSideRattle, "sdRattle")
+              && symbolIs(kParamSideRattle, "sdRattle") && symbolIs(kParamSideGap, "sdGap")
               && symbolIs(kParamFBShift, "fbShift") && symbolIs(kParamFBFlex, "fbFlex")
-              && symbolIs(kParamFBClip, "fbClip") && symbolIs(kParamFBRattle, "fbRattle"),
+              && symbolIs(kParamFBRattle, "fbRattle") && symbolIs(kParamFBGap, "fbGap"),
               "kParams rows are out of ParamIndex order");
 
 // --- dropdowns -------------------------------------------------------------------------------

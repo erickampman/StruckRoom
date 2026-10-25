@@ -6,7 +6,7 @@
 //
 //    object -> direct path                     delay, 1/sqrt(r)
 //           -> 4 first-order wall reflections  delay, wall absorption filter, and
-//                                              the wall effects: flex, shift, clip
+//                                              the wall effects: flex, shift
 //           -> 4 wall resonators               a ModalBank per wall, rung by the
 //                                              sound reaching it, struck where
 //                                              that sound meets the wall; rattle
@@ -61,13 +61,13 @@ public:
         float ringTilt  = 1.0f;      // the wall bank's DampTilt
         bool  link      = false;     // ring with the ABSORBED energy, not the incident sound
 
-        // Wall effects (tools/roomlab exp5). Flex, Clip and Rattle depend on level, against the
+        // Wall effects (tools/roomlab exp5). Flex and Rattle depend on level, against the
         // object's level at full velocity (see kObjectRef in Room.cpp): softer notes, gentler walls.
         float shift  = 0.0f;         // frequency shift, fraction of f0: the near wall up, the far down;
                                      // the wall resonators hear it too
         float flex   = 0.0f;         // the wall moves with the pressure on it: delay swing, periods of f0
-        float clip   = 0.0f;         // soft-clip drive on the reflection, x/(1+|x|)
         float rattle = 0.0f;         // the wall resonator buzzes past a gap
+        float gap    = 0.15f;        // that gap, a share of a full-velocity ring (kRingRef in Room.cpp)
     };
 
     struct Settings {
@@ -156,7 +156,6 @@ private:
     float mDisp[4] = {0, 0, 0, 0};   // flex: the wall's displacement
     float mFlexK[2] = {0, 0};        // samples of delay per unit of displacement
     float mFlexA = 0.0f;             // the displacement's one-pole, at f0
-    float mClipK[2] = {0, 0};        // drive / kObjectRef
     float mRattlePrev[4] = {0, 0, 0, 0};
     float mRattleGap[2] = {0, 0}, mRattleK[2] = {0, 0}, mRattleMax[2] = {0, 0};
 

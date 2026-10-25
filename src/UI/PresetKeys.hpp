@@ -75,12 +75,12 @@ static constexpr PresetKey kPresetKeys[kParamCount] = {
    /*FBLink*/           {"FrontBackWalls", "link"},
    /*SideShift*/        {"SideWalls",      "shift"},
    /*SideFlex*/         {"SideWalls",      "flex"},
-   /*SideClip*/         {"SideWalls",      "clip"},
    /*SideRattle*/       {"SideWalls",      "rattle"},
+   /*SideGap*/          {"SideWalls",      "gap"},
    /*FBShift*/          {"FrontBackWalls", "shift"},
    /*FBFlex*/           {"FrontBackWalls", "flex"},
-   /*FBClip*/           {"FrontBackWalls", "clip"},
    /*FBRattle*/         {"FrontBackWalls", "rattle"},
+   /*FBGap*/            {"FrontBackWalls", "gap"},
 };
 
 } // namespace struckroom
