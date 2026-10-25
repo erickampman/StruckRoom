@@ -64,6 +64,9 @@ subtype `StRm`, manufacturer `nLKL`).
 
 ## Installing the plugin for hosts
 
+A plain `cmake --build build` writes nothing outside `build/`. These targets put the plugin where
+hosts look for it:
+
 ```bash
 cmake --build build --target install-clap
 cmake --build build --target install-vst3
@@ -76,21 +79,57 @@ cmake --build build --target install-auv2     # macOS
 | VST3 | `~/.vst3` | `~/Library/Audio/Plug-Ins/VST3` |
 | AUv2 | — | `~/Library/Audio/Plug-Ins/Components` |
 
-`install-clap` and `install-vst3` symlink the built plugin, so a host picks up the freshest build
-after a rescan; `install-auv2` copies the component (AU hosts don't reliably follow symlinks), so
-run it again after a rebuild. A plain `cmake --build build` only compiles: nothing is installed
-behind your back.
+`install-clap` and `install-vst3` symlink the plugin in `build/`, so a host picks up a rebuild
+after a rescan. The link points into this clone: delete the clone and the host loses the plugin,
+and running the target in another build folder points the host there instead. `install-auv2`
+copies the component (AU hosts don't reliably follow symlinks), so run it again after a rebuild.
+
+To keep the plugin without the clone, copy it instead (the `rm` clears a link the targets left):
+
+```bash
+# Linux
+mkdir -p ~/.clap ~/.vst3
+rm -rf ~/.clap/StruckRoom.clap ~/.vst3/StruckRoom.vst3
+cp build/StruckRoom.clap ~/.clap/
+cp -R build/Release/StruckRoom.vst3 ~/.vst3/
+```
+
+```bash
+# macOS
+mkdir -p ~/Library/Audio/Plug-Ins/CLAP ~/Library/Audio/Plug-Ins/VST3
+rm -rf ~/Library/Audio/Plug-Ins/CLAP/StruckRoom.clap ~/Library/Audio/Plug-Ins/VST3/StruckRoom.vst3
+cp -R build/StruckRoom.clap ~/Library/Audio/Plug-Ins/CLAP/
+cp -R build/StruckRoom.vst3 ~/Library/Audio/Plug-Ins/VST3/
+```
+
+For every user instead, the same folders without `~` (`/usr/lib/clap` and `/usr/lib/vst3` on Linux,
+`/Library/Audio/Plug-Ins/...` on macOS), with `sudo`. Then rescan in the host. A host that is
+already running keeps the plugin it loaded first: quit and restart it after a rebuild. A plugin you
+built yourself has no quarantine flag, so macOS loads it without the steps a downloaded one needs.
 
 ## Options
 
-- `-DSTRUCKROOM_BUILD_VST3=OFF`: skip the VST3.
-- `-DSTRUCKROOM_BUILD_AUV2=OFF`: skip the AUv2 (on by default on macOS only).
-- `-DSTRUCKROOM_WERROR=ON`: warnings as errors.
-- `-DSTRUCKROOM_PRESET_DUMP=ON`: a dev-only DUMP button that writes the current patch as JSON to
-  `$HOME`.
+Pass these to the first command (`cmake -B build ... -DNAME=VALUE`).
+
+| Option | Default | Effect |
+|---|---|---|
+| `STRUCKROOM_BUILD_VST3` | `ON` | Build `StruckRoom.vst3` through clap-wrapper (with the vendored `external/vst3sdk`). |
+| `STRUCKROOM_BUILD_AUV2` | `ON` on macOS, `OFF` elsewhere | Build `StruckRoom.component` through clap-wrapper. **macOS only**. The first configure downloads Apple's AudioUnitSDK; `-DAUDIOUNIT_SDK_ROOT=...` uses a local copy. |
+| `STRUCKROOM_WERROR` | `OFF` | Warnings as errors (CI turns it on). |
+| `STRUCKROOM_PRESET_DUMP` | `OFF` | A dev-only DUMP button that writes the current patch as JSON to `$HOME`. |
 
 ## Checking a build
 
 Validate the CLAP with [clap-validator](https://github.com/free-audio/clap-validator)
 (`clap-validator validate build/StruckRoom.clap`), and the AU with `auval -v aumu StRm nLKL`. If
 auval says it can't find the component, `killall -9 AudioComponentRegistrar` and try again.
+
+## How this differs from the other projects
+
+Every Unlikelyware project builds the same way: `git clone`, `tools/fetch_deps.sh`, the three
+commands under "Build and test", and for a plugin `cmake --build build --target install-clap`. The
+same package list, the same `build/` folder, the same option names (`<PROJECT>_BUILD_VST3`,
+`<PROJECT>_UW_CORE_DIR` and so on). What's different here, and why:
+
+- One of the six synths (PlainOldSynth, StruckSynth, StruckRoom, StruckKit, IFSynth, ModicumFM), which share the PolygraphModular framework, vendored, and DPF for the UI. `tools/fetch_deps.sh` also applies `patches/` to clap-wrapper (its AUv2 view), so `external/clap-wrapper` shows a local change: that is the patch, not uncommitted work.
+- Nothing else.

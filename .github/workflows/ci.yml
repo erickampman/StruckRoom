@@ -54,9 +54,13 @@ jobs:
       # Pinned submodules, only the four vst3sdk submodules the build needs, plus patches/.
       - name: Fetch pinned dependency submodules
         run: tools/fetch_deps.sh
+      - name: Install Ninja (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+      # The documented steps (BUILDING.md), plus warnings as errors.
       - name: Configure
-        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSTRUCKROOM_WERROR=ON
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTRUCKROOM_WERROR=ON
       - name: Build
-        run: cmake --build build -j
+        run: cmake --build build
       - name: Test (framework self-tests via ctest)
         run: ctest --test-dir build --output-on-failure --timeout 30

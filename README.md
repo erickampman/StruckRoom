@@ -184,6 +184,26 @@ because DPF's generated CLAP wrapper drops `CLAP_EVENT_MIDI2` and advertises onl
 dialects, which would make MIDI 2.0 7.9-pitch notes unreachable. This is the same raw-CLAP shape
 PlainOldSynth uses.
 
+## Installing
+
+The download holds `StruckRoom.clap`. Put it in your CLAP folder (create the folder if it isn't there),
+then rescan plugins in your host:
+
+| | Linux | macOS |
+|---|---|---|
+| For you | `~/.clap` | `~/Library/Audio/Plug-Ins/CLAP` |
+| For every user | `/usr/lib/clap` | `/Library/Audio/Plug-Ins/CLAP` |
+
+On macOS, `~/Library` is hidden in Finder: Go ▸ Go to Folder opens it. The 0.9 previews aren't
+notarized, so macOS won't load a downloaded plugin until its quarantine flag is cleared:
+
+```bash
+xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/CLAP/StruckRoom.clap
+```
+
+A host that is already running keeps the plugins it loaded: quit and restart it. To build StruckRoom
+yourself instead, see below.
+
 ## Building from source
 
 ```bash
