@@ -41,10 +41,9 @@ compatibility input (an Off/On switch, lower zone); nothing in this family of pr
 
 ## Threads
 
-`state_load` runs on the main thread while `process()` may be running. It must store the loaded
-values only and let the audio thread apply them at the start of the next block (or `activate()`), as
-StruckSynth's does. Never rebuild the voice graph from the main thread. Not yet true here:
-`state_load` still calls `applyAllParams` directly (ReleaseUMP R1-31).
+`state_load` runs on the main thread while `process()` may be running. It stores the loaded values
+only; the audio thread applies them at the start of the next block (or `activate()` does). Never
+rebuild the voice graph from the main thread.
 
 ## The room
 
