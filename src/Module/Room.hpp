@@ -108,10 +108,13 @@ private:
     ROOM_HOT void processChunk(const float* in, float* outL, float* outR, int n);
 
     // --- room modes, structure of arrays, padded to a multiple of 16 --------------
+    // Each mode's state is kept divided by its input gain b, so the recursion is y = x + a2*y2 + a1*y1
+    // and b rides in the output gains instead: one register fewer per mode in processChunk.
     alignas(32) float mA1[kMaxModes], mA2[kMaxModes], mB[kMaxModes];
-    alignas(32) float mGM[kMaxModes], mGS[kMaxModes];      // omni and figure-8 gains
-    alignas(32) float mQA[kMaxModes], mQB[kMaxModes];      // quadrature from y[n], y[n-1]
-    alignas(32) float mY1[kMaxModes], mY2[kMaxModes];
+    alignas(32) float mGM[kMaxModes];                      // omni gain, times b
+    alignas(32) float mSA[kMaxModes], mSB[kMaxModes];      // figure-8 gain times b, on y[n] and y[n-1]
+    alignas(32) float mQA[kMaxModes], mQB[kMaxModes];      // quadrature from y[n], y[n-1] (unscaled), for retuning
+    alignas(32) float mY1[kMaxModes], mY2[kMaxModes];      // state / b
     // geometry cache: f0-independent per mode
     float mRatio[kMaxModes];     // f / f0
     float mLoss [kMaxModes];     // energy loss rate per unit f0, from the walls

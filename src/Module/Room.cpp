@@ -282,9 +282,13 @@ ROOM_HOT void Room::retunePitch() {
         // bigger amplitude at a lower frequency (near DC, a growing ramp). With
         // y1 = A sin(theta) and c = A cos(theta) from the OLD coefficients, the
         // new y2 is A/r' * sin(theta - w').
+        // The state is stored over the input gain b: back to amplitudes with the old b (0 for a mode
+        // that was silent), then over the new one, sw (never 0: w is never 0 or pi).
         if (i < oldCount) {
-            const float c = mQA[i] * mY1[i] + mQB[i] * mY2[i];
-            mY2[i] = (mY1[i] * cw - c * sw) / r;
+            const float y1 = mB[i] * mY1[i], y2 = mB[i] * mY2[i];
+            const float c = mQA[i] * y1 + mQB[i] * y2;
+            mY1[i] = y1 / sw;
+            mY2[i] = (y1 * cw - c * sw) / (r * sw);
         }
 
         mA1[i] = 2.0f * r * cw;
@@ -293,16 +297,20 @@ ROOM_HOT void Room::retunePitch() {
         // For y[n] = A r^n sin(theta): A r^n cos(theta) = (cos w * y[n] - r * y[n-1]) / sin w.
         mQA[i] = cw / sw;
         mQB[i] = -r / sw;
-        mGM[i] = late * mGM0[i];
-        mGS[i] = late * mGS0[i];
+        // The output gains carry b = sw. On the figure-8 that cancels the quadrature's 1/sw.
+        mGM[i] = late * mGM0[i] * sw;
+        mSA[i] = late * mGS0[i] * cw;
+        mSB[i] = -late * mGS0[i] * r;
     }
     for (int i = 0; i < sub; ++i) {
-        mB[i] = mGM[i] = mGS[i] = 0.0f;
+        // Silent, and with no feedback: processChunk still runs these (the input is no longer
+        // scaled per mode), so they pass the input straight through to a zero gain.
+        mA1[i] = mA2[i] = mB[i] = mGM[i] = mSA[i] = mSB[i] = 0.0f;
         mY1[i] = mY2[i] = 0.0f;
     }
     const int padded = (n + 15) & ~15;   // processChunk takes modes sixteen at a time
     for (int i = n; i < padded; ++i) {
-        mA1[i] = mA2[i] = mB[i] = mQA[i] = mQB[i] = mGM[i] = mGS[i] = 0.0f;
+        mA1[i] = mA2[i] = mB[i] = mQA[i] = mQB[i] = mGM[i] = mSA[i] = mSB[i] = 0.0f;
     }
     // Modes entering or leaving the list carry no meaningful state.
     for (int i = std::min(oldCount, n); i < std::max(oldCount, padded); ++i) mY1[i] = mY2[i] = 0.0f;
@@ -590,21 +598,24 @@ ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int 
             for (int k = 0; k < 8; ++k) if (std::fabs(v[k]) < kDenormalFloor) v[k] = 0.0f;
         };
         // Two groups of eight in flight: each group's recursion waits on its previous sample, so
-        // a second, independent group fills the pipeline. Written (b*x + a2*y2) + a1*y1 so only the
+        // a second, independent group fills the pipeline. Written (x + a2*y2) + a1*y1 so only the
         // last multiply-add depends on the previous output. mCount is padded to 16 for this.
+        // Each group holds seven vectors (two coefficients, two states, three gains): two groups
+        // fit the baseline's sixteen registers. With b and the quadrature as separate vectors they
+        // spilled, and this ran 29% slower (660 against 470 ns a sample, 2,992 modes, i3-9100).
         for (int i = 0; i < modes; i += 16) {
-            const v8 a1 = load(mA1 + i), a2 = load(mA2 + i), b = load(mB + i);
-            const v8 c1 = load(mA1 + i + 8), c2 = load(mA2 + i + 8), d = load(mB + i + 8);
+            const v8 a1 = load(mA1 + i), a2 = load(mA2 + i);
+            const v8 c1 = load(mA1 + i + 8), c2 = load(mA2 + i + 8);
             v8 y1 = load(mY1 + i), y2 = load(mY2 + i);
             v8 z1 = load(mY1 + i + 8), z2 = load(mY2 + i + 8);
-            const v8 gm = load(mGM + i), gs = load(mGS + i), qa = load(mQA + i), qb = load(mQB + i);
-            const v8 hm = load(mGM + i + 8), hs = load(mGS + i + 8), ra = load(mQA + i + 8), rb = load(mQB + i + 8);
+            const v8 gm = load(mGM + i), sa = load(mSA + i), sb = load(mSB + i);
+            const v8 hm = load(mGM + i + 8), ta = load(mSA + i + 8), tb = load(mSB + i + 8);
             for (int s = 0; s < n; ++s) {
                 const float x = late[s];
-                const v8 y = (b * x + a2 * y2) + a1 * y1;
-                const v8 z = (d * x + c2 * z2) + c1 * z1;
+                const v8 y = (x + a2 * y2) + a1 * y1;
+                const v8 z = (x + c2 * z2) + c1 * z1;
                 accM[s] += gm * y + hm * z;
-                accS[s] += gs * (qa * y + qb * y1) + hs * (ra * z + rb * z1);
+                accS[s] += (sa * y + sb * y1) + (ta * z + tb * z1);
                 y2 = y1; y1 = y;
                 z2 = z1; z1 = z;
             }

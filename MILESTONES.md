@@ -21,6 +21,9 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] Wall materials: the object's full list (26), generators included
 - [x] By hand: the Walls tab's three rows checked (2026-10-25)
 - [ ] By hand: listen to the wall effects in a host
+- [x] Room modes 29% cheaper: each mode's input gain folded into its output gains, so two groups of
+      eight fit the baseline's registers (720 -> 510 ns a sample per voice at Detail 12, i3-9100); output
+      the same to float rounding (-84..-93 dB; -66 dB after a four-octave mono retune)
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
