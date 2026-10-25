@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.21)   # clap-wrapper needs 3.21
 
 # C is needed for DPF's pugl / dgl sources.
-project(StruckRoom VERSION 0.3.0 LANGUAGES C CXX)
+# macOS: 26 or later, Apple Silicon only. Set before project();
+# ignored on other platforms. Both are cache variables, so -D overrides them.
+set(CMAKE_OSX_DEPLOYMENT_TARGET 26.0 CACHE STRING "macOS 26 or later")
+set(CMAKE_OSX_ARCHITECTURES arm64 CACHE STRING "Apple Silicon only")
+project(StruckRoom VERSION 0.9.0 LANGUAGES C CXX)
 
 # Everything is linked into the .clap, a shared module, so every static library in it (the engine,
 # the plugin core, DPF's DGL) must be position-independent. clang on Linux defaults to PIE and

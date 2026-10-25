@@ -11,3 +11,6 @@ compile_commands.json
 .DS_Store
 tools/roomlab/build/
 tools/roomlab/renders/
+
+# Local notes for Claude Code sessions; not part of the public repo
+CLAUDE.md

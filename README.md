@@ -117,7 +117,7 @@ The **MPE** switch (Global panel, off by default) treats input as an MPE lower z
   higher of its own value and the master channel's.
 - Presets don't store the switch: it describes the controller, not the sound.
 
-`~/Dev-MIDI/mpe-sender` plays scripted MPE tests for listening.
+mpe-sender (an Unlikelyware test tool, not yet public) plays scripted MPE tests for listening.
 
 ### Expression: pressure and timbre
 

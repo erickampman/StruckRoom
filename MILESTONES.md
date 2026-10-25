@@ -45,4 +45,4 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 
 ## M4: Later
 - [x] Pitch 7.25 as persistent per-key tuning table (CLAP tuning stays per-note)
-- [ ] Move onto the DPF fork (erickampman/DPF) with own DGL_NAMESPACE
+- [x] Move onto the DPF fork (erickampman/DPF) with own DGL_NAMESPACE (2026-10-23)
