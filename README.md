@@ -184,91 +184,18 @@ because DPF's generated CLAP wrapper drops `CLAP_EVENT_MIDI2` and advertises onl
 dialects, which would make MIDI 2.0 7.9-pitch notes unreachable. This is the same raw-CLAP shape
 PlainOldSynth uses.
 
-## Layout
+## Building from source
 
-The engine (`src/`) mirrors PolygraphModular's structure; the CLAP plugin + GUI live in `src/`:
-
-```
-plugin/               the shared plugin definition
-                        DistrhoPluginInfo.h (UI flags; the plugin identity macros are inert),
-                        StruckRoomParams.h (shared param table + dropdown labels)
-src/plugin.cpp        the raw CLAP plugin: entry point, note/audio/params/state/gui extensions,
-                        and the DSP glue (MIDI + params → VoiceManager)
-src/plugin_gui.h      the C seam between plugin.cpp and the GUI shell
-src/UI/               the plugin GUI (reusable NanoVG widgets + the panel)
-                        Knob, Slider, Toggle, Dropdown, PopupMenu, TabBar, GroupBox, TitleText,
-                        Logo; PresetKeys / PresetDump (preset menu + dev-only JSON dumper);
-                        StruckRoomUI.cpp — composes the controls into labelled groups and hosts
-                        them through DPF's UIExporter
-src/Common/           shim + MIDI + params + utilities
-                        pm_compat.h (Apple→portable), pm_midi.* (spec UMP + MIDI-1 decode),
-                        clap_ump.h (CLAP↔UMP), pm_params.h / pm_param_data.* / pm_addresses.h,
-                        ParamAddressMacros.h, CPPTypes.hpp, CPPProcs.hpp, KPBuffPairHelper.hpp
-src/Module/           Module core + modules
-                        StrikeModule.*, ModalBank.* / ModalBankModule.* (+ ModalMaterials,
-                        ModalGenerators, ModalDiscretizer), Slew, PitchConverter, Final; the
-                        IFS / Sine / ADSR / LPF / CVMixer / Level / Combine modules inherited
-                        from IFSynth stay instantiated but unconnected
-src/Voice/            voice engine
-                        Voice.*, VoiceStateManager.*, VoiceManager.*, ModuleMap.*, ModuleGraph.hpp,
-                        ModuleInitSpecs.hpp, pm_module_specs.cpp, ConnectionCommandQueue.hpp
-Presets/              factory presets (JSON), compiled into GeneratedPresets.h by
-                        tools/gen_presets.py
-Resources/            font + logo, embedded into the binary at build time
-test/                 in-process self-tests (see TESTING.md)
-dpf/                  DISTRHO Plugin Framework (submodule, + nested pugl) — the GUI layer only
-external/clap         CLAP headers (submodule, pinned 1.2.9) — the plugin and the tests
-external/clap-wrapper free-audio's clap-wrapper (submodule, v0.16.0) — the VST3 and AUv2 builds
-external/vst3sdk      Steinberg VST3 SDK (submodule; only base, cmake, pluginterfaces, public.sdk)
-patches/              local patches to the submodules, applied by tools/apply_dep_patches.sh
-```
-
-Vendored PolygraphModular files keep their original `#include "X.hpp"` form; every framework
-folder is on the include path so they resolve across `Common/` `Module/` `Voice/`. The plugin
-links the `pm_framework` static lib; DPF's `UIExporter` hosts the editor inside the CLAP gui
-extension.
-
-## Build
-
-DPF's OpenGL/NanoVG UI needs the usual X11 + GL dev packages (Linux):
-
-```sh
-sudo apt install pkg-config libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev
-```
-
-Then:
-
-```sh
+```bash
 git clone https://github.com/erickampman/StruckRoom.git
 cd StruckRoom
-tools/fetch_deps.sh                            # pinned submodules + patches/
-cmake -B build -G Ninja -S . -DCMAKE_BUILD_TYPE=Release
+tools/fetch_deps.sh
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure     # see TESTING.md for the full suite
 ```
 
-`tools/fetch_deps.sh` initialises only the four VST3 SDK submodules the build needs (a plain
-`--recurse-submodules` also pulls its docs, tutorials and VSTGUI) and applies the clap-wrapper
-patch that makes the AUv2 editor draw. On Linux the VST3 SDK also wants `libxinerama-dev
-libxcb1-dev libx11-xcb-dev libxcb-util-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev`.
-
-Produces `build/StruckRoom.clap` (a bundle on macOS). `cmake --build build --target install-clap`
-symlinks it into `~/.clap` (Linux) or `~/Library/Audio/Plug-Ins/CLAP/` (macOS), so any CLAP host
-picks up the freshest build after a rescan. Validate with
-[`clap-validator`](https://github.com/free-audio/clap-validator). Test details in
-[TESTING.md](TESTING.md).
-
-The same build also makes `build/StruckRoom.vst3` and, on macOS, `build/StruckRoom.component`
-(AUv2: type `aumu`, subtype `StRm`, manufacturer `nLKL`), both through clap-wrapper around the same
-plugin. On Linux the VST3 bundle is `build/Release/StruckRoom.vst3`. `install-vst3` symlinks it into
-`~/.vst3` or `~/Library/Audio/Plug-Ins/VST3/`; `install-auv2` copies the component into
-`~/Library/Audio/Plug-Ins/Components/` (AU hosts don't reliably follow symlinks). Check the AU with
-`auval -v aumu StRm nLKL`; if it says it can't find the component, `killall -9
-AudioComponentRegistrar` and try again.
-
-Configure options: `-DSTRUCKROOM_BUILD_VST3=OFF`, `-DSTRUCKROOM_BUILD_AUV2=OFF` (on by default on
-macOS only), `-DSTRUCKROOM_WERROR=ON` (warnings as errors), `-DSTRUCKROOM_PRESET_DUMP=ON`
-(dev-only DUMP button that writes the current patch as JSON to `$HOME`).
+[BUILDING.md](BUILDING.md) has what to install first on Linux and macOS, the tests, installing
+the plugin for hosts, and the build options.
 
 ## License
 
