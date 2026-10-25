@@ -68,6 +68,42 @@ EXPERIMENTS = {
         ("02_C4", {"note": 60, "room.track": 0}),
         ("03_C6", {"note": 84, "room.track": 0}),
     ]),
+    # Wall effects: sound changed on its way off the walls. Shifts are fractions of f0, so the
+    # same setting beats or clangs the same way on every note. `soft` = vel 0.3, same gain.
+    "5a": ("exp5a_shift", "Frequency shift: the reflections, the wall rings, the late field", [
+        ("00_plain",          {}),
+        ("01_beat_slow",      {"side.shift": 0.002, "fb.shift": 0.003}),
+        ("02_beat_fast",      {"side.shift": 0.02,  "fb.shift": 0.03}),
+        ("03_clang",          {"walls.shift": 0.1}),
+        ("04_ring_plain",     {"walls.ring": 1}),
+        ("05_ring_shifted",   {"walls.ring": 1, "walls.shift": 0.1, "walls.shift.ring": 1}),
+        ("06_late_slow",      {"late.shift": 0.002}),
+        ("07_late_clang",     {"late.shift": 0.05}),
+    ]),
+    "5b": ("exp5b_flex", "Flexing wall: delay swing in periods of f0", [
+        ("00_plain",          {}),
+        ("01_flex_0.1",       {"walls.flex": 0.1}),
+        ("02_flex_0.3",       {"walls.flex": 0.3}),
+        ("03_flex_1",         {"walls.flex": 1}),
+        ("04_flex_1_soft",    {"walls.flex": 1, "vel": 0.3}),
+        ("05_plain_soft",     {"vel": 0.3}),
+    ]),
+    "5c": ("exp5c_clip", "Soft clip on the reflections", [
+        ("00_plain",          {}),
+        ("01_clip_2",         {"walls.clip": 2}),
+        ("02_clip_8",         {"walls.clip": 8}),
+        ("03_clip_8_asym",    {"walls.clip": 8, "walls.clip.asym": 0.7}),
+        ("04_clip_8_soft",    {"walls.clip": 8, "vel": 0.3}),
+        ("05_plain_soft",     {"vel": 0.3}),
+    ]),
+    "5d": ("exp5d_rattle", "Rattle: the wall resonators buzz past a gap", [
+        ("00_ring_plain",     {"walls.ring": 1}),
+        ("01_rattle_0.3",     {"walls.ring": 1, "walls.rattle": 0.3}),
+        ("02_rattle_1",       {"walls.ring": 1, "walls.rattle": 1}),
+        ("03_rattle_1_gap0.1", {"walls.ring": 1, "walls.rattle": 1, "walls.gap": 0.1}),
+        ("04_rattle_1_soft",  {"walls.ring": 1, "walls.rattle": 1, "vel": 0.3}),
+        ("05_ring_soft",      {"walls.ring": 1, "vel": 0.3}),
+    ]),
 }
 
 

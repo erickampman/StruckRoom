@@ -50,6 +50,7 @@ strike -> object (ModalBank) -> direct path            delay, 1/sqrt(r)
 | Pitch tracking | `room.track` (1 = room scales with the note, 0 = fixed physical room), `decay.track` (1 = T60s scale as 1/f0 too, 0 = seconds, as in StruckSynth) | |
 | Listener | `mic.width` | coincident Mid/Side pair: omni + figure-8 along x. Coincident because a spaced pair would be a different number of wavelengths apart on every note |
 | Mix | `mix.direct mix.early mix.late mix.ring` | |
+| Wall effects | `side.*` / `fb.*` / `walls.*`: `flex clip clip.asym shift shift.ring rattle gap`; `late.shift`; `vel` | sound changed on its way off a wall (exp5, below) |
 
 ## Experiments
 
@@ -60,6 +61,8 @@ strike -> object (ModalBank) -> direct path            delay, 1/sqrt(r)
 3. **Walls**: mirror, absorber, ringer, absorber + ringer (linked and free).
 4. **Pitch**, C2 / C4 / C6: (a) everything scales, decays included; (b) the room scales, decays stay
    in seconds; (c) the room stays put and only the object scales.
+5. **Wall effects** (2026-10-25, for ReleaseUMP R2-10): ways for the wall's material to change the
+   sound more than absorption and ringing do, cheaply. See [Wall effects](#wall-effects-exp5).
 
 ## First observations (from the measurements, before anyone has listened)
 
@@ -75,6 +78,56 @@ strike -> object (ModalBank) -> direct path            delay, 1/sqrt(r)
   `mic.width` to hear the other side of it.
 - **A mirror room (absorb 0) rings at every mode for the air's 12 s**, including modes below f0 that
   the object's resonance skirts excite.
+
+## Wall effects (exp5)
+
+Sound is changed on its way off each wall, in this order: flex, clip, shift. Rattle acts on the
+wall resonators. Level-dependent effects are referenced to the object's peak at `vel=1`, so a
+softer note gets a gentler wall. `vel` scales the strike, and each sweep shares one gain, so the
+`soft` files are quieter as well as cleaner.
+
+| Effect | Keys | What it does |
+|---|---|---|
+| Frequency shift | `shift` (fraction of f0), `shift.ring`, `late.shift` | Every partial moves by the same number of Hz (single sideband: a Hilbert pair of two 4-section allpass chains, then a quadrature oscillator). A pair's near wall shifts up and its far wall down, so the sides drift against each other. `shift.ring` also feeds the shifted sound to the wall resonators. `late.shift` shifts the room modes' output. Shifting their input would only change which modes ring, since each mode rings at its own frequency. Linear, so it doesn't depend on level. |
+| Flex | `flex` (peak delay swing, periods of f0) | The wall moves with the pressure on it (low-passed at f0, as a mass-loaded panel follows it), lengthening the path. A self phase modulation: loud partials bend each other, quiet ones pass. |
+| Soft clip | `clip` (drive), `clip.asym` (bias) | x/(1+\|x\|), unity gain for small signals. A bias adds even harmonics plus DC, which a one-pole blocker at f0/8 removes. |
+| Rattle | `rattle`, `gap` (fraction of the resonator's peak at vel 1) | A loose panel: what the wall resonator rings past the gap is differenced into clicks and added. Needs `ring > 0`. |
+
+**Checked:** a shift of 0.1·f0 puts C4's 261.7 Hz at 287.8 Hz from the near wall and 235.4 Hz from the
+far one, with the other sideband 44–50 dB down.
+
+**Measured, not yet listened to** (`renders/exp5*`). Each figure is the RMS of (render − reference) relative
+to the reference, over the whole render and after 1.5 s. Shift figures overstate how different the shift
+sounds, because a moved phase counts as change.
+
+| Render | Change | After 1.5 s | Notes |
+|---|---|---|---|
+| 5a `beat_slow` (0.002/0.003·f0) | −1.9 dB | −11 dB | slow beating against the direct sound |
+| 5a `clang` (0.1·f0) | −1.5 dB | −7.6 dB | beat stripes across the whole tail |
+| 5a `ring_shifted` vs `ring_plain` | −0.6 dB | −4.1 dB | wall rings no longer line up with the object |
+| 5a `late_slow` / `late_clang` | −5.2 / −0.9 dB | +0.4 / +1.2 dB | moves the tail itself, the largest change late on |
+| 5b `flex` 0.1 / 0.3 / 1 | −16 / −7.4 / −1.8 dB | −70 / −61 / −50 dB | audible from about 0.3; fades as the note decays |
+| 5b `flex_1_soft` vs `plain_soft` | −7.4 dB | −61 dB | vel 0.3 at flex 1 = vel 1 at flex 0.3: linear in level |
+| 5c `clip` 2 / 8 / 8 asym | −11 / −7.3 / −11.5 dB | −60 / −48 / −30 dB | the asym tail figure is the DC blocker filtering the reflections |
+| 5c `clip_8_soft` vs `plain_soft` | −10.6 dB | −58 dB | only 3 dB gentler at vel 0.3: drive 8 still saturates |
+| 5d `rattle` 0.3 / 1 / 1 gap 0.1 | −14 / −3.4 / −1.6 dB | none | stops once the ring decays inside the gap |
+| 5d `rattle_1_soft` vs `ring_soft` | none | none | at vel 0.3 the ring never reaches the gap: all or nothing |
+
+**Cost** in the plugin's terms: `Room` at its default Detail (2,992 modes) takes 694 ns per sample per
+voice on this PC. Float versions of the effects for all four walls, timed the same way:
+
+| Effect | ns/sample | of the room |
+|---|---|---|
+| Shift, one shared Hilbert pair | 6.8 | 1.0% |
+| Shift, one Hilbert pair per wall | 41.7 | 6.0% |
+| Flex | 19.2 | 2.8% |
+| Clip + DC blocker | 3.3 | 0.5% |
+| Rattle | 0.5 | 0.1% |
+
+`late.shift` would be two more Hilbert pairs (M and S), about 1% more. A Hilbert pair is linear and
+time-invariant, so in the plugin one pair can run on the object's sound before the delay line. The line
+then stores I and Q (a second 512 KB buffer per voice), and each wall reads both at its delay and applies its
+own oscillator phase. That is the "shared" row.
 
 ## Simplifications to know about
 

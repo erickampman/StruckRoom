@@ -11,6 +11,8 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] Editor tabs: Object / Room (draggable map) / Walls (decay plot)
 - [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
 - [ ] Rename leftovers: help page still describes StruckSynth
+- [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
+- [ ] By hand: listen to exp5 and decide whether any goes into the plugin (each would add Walls controls)
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure

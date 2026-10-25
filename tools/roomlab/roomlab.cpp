@@ -64,10 +64,21 @@ struct Wall {
     double ringT60    = 1.5;    // seconds at note 60 (see decay.track)
     double ringTilt   = 1.0;    // the wall bank's DampTilt
     bool   link       = false;  // ring with the ABSORBED energy, sqrt(alpha(f))
+
+    // Wall effects (exp5), in the order the reflection meets them. Level-dependent ones are
+    // referenced to the object's peak at vel 1, so a softer note is a gentler wall.
+    double flex      = 0.0;     // wall moves with the pressure on it: peak delay swing, periods of f0
+    double clip      = 0.0;     // soft-clip drive, x/(1+|x|); 0 = off
+    double clipAsym  = 0.0;     // bias into the clipper: even harmonics (DC-blocked after)
+    double shift     = 0.0;     // frequency shift, fraction of f0; the pair's two walls go opposite ways
+    bool   shiftRing = false;   // the wall resonators hear the shifted sound too
+    double rattle    = 0.0;     // wall resonator buzz level; needs ring > 0
+    double gap       = 0.3;     // rattle threshold, fraction of the resonator's peak at vel 1
 };
 
 struct Params {
     double note    = 60.0;
+    double vel     = 1.0;       // strike level; matters only to the level-dependent wall effects
     double fs      = 48000.0;
     double seconds = 4.0;
 
@@ -96,6 +107,7 @@ struct Params {
 
     // mix
     double direct = 1.0, early = 1.0, late = 1.0, ringMix = 1.0;
+    double lateShift = 0.0;     // frequency shift of the room modes' output, fraction of f0
 };
 
 const ModalMaterial* findMaterial(const std::string& name) {
@@ -113,7 +125,7 @@ const ModalMaterial* findMaterial(const std::string& name) {
 bool setParam(Params& p, const std::string& k, const std::string& v) {
     const double d = std::atof(v.c_str());
     std::map<std::string, double*> num = {
-        {"note", &p.note}, {"fs", &p.fs}, {"seconds", &p.seconds},
+        {"note", &p.note}, {"vel", &p.vel}, {"late.shift", &p.lateShift}, {"fs", &p.fs}, {"seconds", &p.seconds},
         {"obj.t60", &p.objT60}, {"obj.tilt", &p.objTilt}, {"obj.pos", &p.objPos},
         {"obj.bright", &p.objBright}, {"obj.hardness", &p.hardness},
         {"room.w", &p.roomW}, {"room.d", &p.roomD}, {"room.track", &p.roomTrack},
@@ -145,6 +157,13 @@ bool setParam(Params& p, const std::string& k, const std::string& v) {
         else if (key == "ring.t60")  w->ringT60 = d;
         else if (key == "ring.tilt") w->ringTilt = d;
         else if (key == "link")      w->link = d != 0.0;
+        else if (key == "flex")      w->flex = d;
+        else if (key == "clip")      w->clip = d;
+        else if (key == "clip.asym") w->clipAsym = d;
+        else if (key == "shift")     w->shift = d;
+        else if (key == "shift.ring") w->shiftRing = d != 0.0;
+        else if (key == "rattle")    w->rattle = d;
+        else if (key == "gap")       w->gap = d;
         else return false;
     }
     return true;
@@ -153,13 +172,14 @@ bool setParam(Params& p, const std::string& k, const std::string& v) {
 void usage() {
     std::puts(
         "roomlab out.wav [key=value ...]\n"
-        "  note seconds fs\n"
+        "  note vel seconds fs\n"
         "  obj.mat obj.t60 obj.tilt obj.pos obj.bright obj.hardness\n"
         "  room.w room.d (wavelengths at note 60) room.track decay.track room.air\n"
         "  room.maxharm room.maxmodes\n"
         "  src.x src.y mic.x mic.y (0..1 of the room) mic.width (M/S side level)\n"
         "  side.* fb.* walls.*: absorb tilt ring ring.mat ring.ratio ring.t60 ring.tilt link\n"
-        "  mix.direct mix.early mix.late mix.ring\n"
+        "                       flex clip clip.asym shift shift.ring rattle gap\n"
+        "  mix.direct mix.early mix.late mix.ring late.shift\n"
         "Materials: string bar tunedbar membrane opentube closedtube tine bell\n"
         "           guitarbody violinbody soundboard genericbody");
 }
@@ -224,6 +244,108 @@ std::vector<float> runBank(ModalBank& bank, const std::vector<float>& x) {
     // Spread 0: L = R = y * cos(pi/4). Undo the pan law to get y.
     for (size_t i = 0; i < x.size(); ++i) L[i] *= (float)M_SQRT2;
     return L;
+}
+
+// ---------------------------------------------------------------------------
+// Wall effects (exp5). Each is written sample by sample with only a few floats
+// of state, as the plugin would run it, so the cost seen here is the cost there.
+// ---------------------------------------------------------------------------
+
+// Hilbert pair: two chains of four second-order allpasses, (a^2 - z^-2) / (1 - a^2 z^-2),
+// whose outputs stay 90 degrees apart (within 0.7 degrees) from about fs/2000 to just
+// under Nyquist. Olli Niemitalo's coefficients; the first chain gets one sample's delay.
+struct Hilbert {
+    static constexpr double kA[2][4] = {
+        { 0.6923878, 0.9360654322959, 0.9882295226860, 0.9987488452737 },
+        { 0.4021921162426, 0.8561710882420, 0.9722909545651, 0.9952884791278 },
+    };
+    double x1[2][4] = {}, x2[2][4] = {}, y1[2][4] = {}, y2[2][4] = {};
+    double d = 0.0;   // the first chain's extra sample
+    void process(double x, double& i, double& q) {
+        double v[2] = { x, x };
+        for (int c = 0; c < 2; ++c)
+            for (int k = 0; k < 4; ++k) {
+                const double a2 = kA[c][k] * kA[c][k];
+                const double y = a2 * (v[c] + y2[c][k]) - x2[c][k];
+                x2[c][k] = x1[c][k]; x1[c][k] = v[c];
+                y2[c][k] = y1[c][k]; y1[c][k] = y;
+                v[c] = y;
+            }
+        i = d; d = v[0];
+        q = v[1];
+    }
+};
+
+// Single-sideband shift: every partial moves up by hz (down if negative).
+void freqShift(std::vector<float>& x, double hz, double fs) {
+    if (hz == 0.0) return;
+    Hilbert h;
+    const double w = 2.0 * M_PI * hz / fs;
+    double c = 1.0, s = 0.0;   // the quadrature oscillator, a rotating phasor
+    const double cw = std::cos(w), sw = std::sin(w);
+    for (size_t n = 0; n < x.size(); ++n) {
+        double i, q;
+        h.process(x[n], i, q);
+        x[n] = (float)(i * c + q * s);   // q lags i here, so + is the upper sideband
+        const double c2 = c * cw - s * sw;
+        s = s * cw + c * sw;
+        c = c2;
+        if ((n & 1023) == 1023) { const double m = 1.0 / std::hypot(c, s); c *= m; s *= m; }
+    }
+}
+
+// Flexing wall: the wall's displacement (the pressure on it, low-passed at f0, as a
+// mass-loaded panel would follow it) lengthens the path, so the reflection is read
+// that much later. A self phase modulation: loud partials bend each other, quiet ones don't.
+// `swing` is the delay swing at the reference level, in samples.
+std::vector<float> flexWall(const std::vector<float>& x, double swing, double ref, double f0, double fs) {
+    const double a = std::exp(-2.0 * M_PI * f0 / fs);
+    const double k = swing / ref;
+    std::vector<float> y(x.size());
+    double disp = 0.0;
+    const long n = (long)x.size();
+    for (long i = 0; i < n; ++i) {
+        disp = a * disp + (1.0 - a) * x[i];
+        const double pos = (double)i - k * disp;   // the plugin has a base delay to read ahead into
+        const long   j   = (long)std::floor(pos);
+        const double fr  = pos - (double)j;
+        auto at = [&](long t) { return (t >= 0 && t < n) ? (double)x[t] : 0.0; };
+        y[i] = (float)((1.0 - fr) * at(j) + fr * at(j + 1));
+    }
+    return y;
+}
+
+// Soft clip, unity gain for small signals: g(u + b) - g(b) over g'(b), g(u) = u/(1+|u|),
+// then, with a bias, a one-pole DC blocker at f0/8 for the bias's DC.
+void softClip(std::vector<float>& x, double drive, double asym, double ref, double f0, double fs) {
+    if (drive <= 0.0) return;
+    auto g = [](double u) { return u / (1.0 + std::fabs(u)); };
+    const double slope = 1.0 / ((1.0 + std::fabs(asym)) * (1.0 + std::fabs(asym)));
+    const double scale = ref / (drive * slope);
+    const double r = std::exp(-2.0 * M_PI * (f0 / 8.0) / fs);
+    double xp = 0.0, yp = 0.0;
+    for (float& v : x) {
+        const double c = scale * (g(drive * v / ref + asym) - g(asym));
+        if (asym == 0.0) { v = (float)c; continue; }   // symmetric: no DC to block
+        const double hp = c - xp + r * yp;
+        xp = c; yp = hp;
+        v = (float)hp;
+    }
+}
+
+// Rattle: a loose panel that slaps once the wall rings past a gap. What crosses the gap
+// is differenced, which makes each crossing a click, and scaled so a full-level ring
+// that crosses its gap by the same amount it rings at f0 buzzes at about the ring's own level.
+void rattle(std::vector<float>& x, double level, double gapFrac, double ref, double f0, double fs) {
+    if (level <= 0.0) return;
+    const double gap = gapFrac * ref;
+    const double norm = level * fs / (2.0 * M_PI * f0) / std::max(1.0 - gapFrac, 0.05);
+    double prev = 0.0;
+    for (float& v : x) {
+        const double over = v - std::clamp((double)v, -gap, gap);
+        v = (float)(v + norm * (over - prev));
+        prev = over;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -343,7 +465,7 @@ int main(int argc, char** argv) {
             strike[i] = (float)w;
             sum += w;
         }
-        for (int i = 0; i < len && i < (int)N; ++i) strike[i] = (float)(strike[i] / sum);
+        for (int i = 0; i < len && i < (int)N; ++i) strike[i] = (float)(p.vel * strike[i] / sum);
     }
 
     // --- object ---
@@ -357,6 +479,10 @@ int main(int argc, char** argv) {
     obj.setBrightness((float)p.objBright);
     obj.setSpread(0.0f);
     const std::vector<float> y = runBank(obj, strike);
+    // The level the wall effects are set against: this object's peak at vel 1.
+    double yRef = 0.0;
+    for (float v : y) yRef = std::max(yRef, (double)std::fabs(v));
+    yRef /= std::max(p.vel, 1e-6);
 
     // --- geometry ---
     struct Pt { double x, y; };
@@ -410,9 +536,17 @@ int main(int argc, char** argv) {
 
         for (const Image& im : images) {
             if (im.pair != pair) continue;
+            // The pair's near wall (image at negative x or y) shifts up, the far one down.
+            const bool near = (pair == 0 ? im.img.x : im.img.y) < 0.0;
+            const double shiftHz = (near ? 1.0 : -1.0) * w.shift * f0;
 
-            // Early reflection: the image source, seen through the wall's filter.
-            arrive(yRefl, im.img, -firLatency, p.early);
+            // Early reflection: the image source, seen through the wall's filter and
+            // then its effects. The level-dependent ones see the absorbed level.
+            std::vector<float> r = (w.flex > 0.0)
+                ? flexWall(yRefl, w.flex * fs / f0, yRef, f0, fs) : yRefl;
+            softClip(r, w.clip, w.clipAsym, yRef, f0, fs);
+            freqShift(r, shiftHz, fs);
+            arrive(r, im.img, -firLatency, p.early);
 
             if (w.ring <= 0.0) continue;
 
@@ -446,7 +580,15 @@ int main(int argc, char** argv) {
             std::vector<float> in(N, 0.0f);
             const double rIn = dist(S, R);
             addDelayed(in, yDrive, rIn * samplesPerLambda - (w.link ? firLatency : 0.0), spread(rIn));
-            const std::vector<float> ring = runBank(bank, in);
+            if (w.shiftRing) freqShift(in, shiftHz, fs);
+            std::vector<float> ring = runBank(bank, in);
+            if (w.rattle > 0.0) {
+                // The gap is set against this wall's ring at vel 1; the bank is linear in vel.
+                double ringRef = 0.0;
+                for (float v : ring) ringRef = std::max(ringRef, (double)std::fabs(v));
+                ringRef /= std::max(p.vel, 1e-6);
+                rattle(ring, w.rattle, w.gap, ringRef, f0 * w.ringRatio, fs);
+            }
             arrive(ring, R, 0.0, kRingGain * p.ringMix * w.ring);
         }
     }
@@ -532,7 +674,17 @@ int main(int argc, char** argv) {
         // drive them with the object delayed by the direct path.
         std::vector<float> drive(N, 0.0f);
         addDelayed(drive, y, dist(S, Mic) * samplesPerLambda, 1.0);
-        renderRoomModes(m, drive, mid, side);
+        if (p.lateShift == 0.0) {
+            renderRoomModes(m, drive, mid, side);
+        } else {
+            // Shift what the modes put out: shifting their input would only change which
+            // modes ring, and they would still ring at their own frequencies.
+            std::vector<float> lm(N, 0.0f), ls(N, 0.0f);
+            renderRoomModes(m, drive, lm, ls);
+            freqShift(lm, p.lateShift * f0, fs);
+            freqShift(ls, p.lateShift * f0, fs);
+            for (size_t i = 0; i < N; ++i) { mid[i] += lm[i]; side[i] += ls[i]; }
+        }
 
         double tMin = 1e9, tMax = 0.0;
         for (double t : m.t60) { tMin = std::min(tMin, t); tMax = std::max(tMax, t); }
