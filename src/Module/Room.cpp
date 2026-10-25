@@ -6,6 +6,7 @@
 //
 
 #include "Room.hpp"
+#include "ModalGenerators.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -33,6 +34,31 @@ constexpr double kOutputTrim = 0.35;
 
 // Applied settings are rebuilt at most this often while a knob moves.
 constexpr double kRebuildSeconds = 0.03;
+
+// Wall effects. Flex, Clip and Rattle depend on level, so they are set against fixed levels,
+// measured at the default patch and full velocity: kObjectRef is the peak of the room's input (the
+// object's sound), kRingRef the peak of a wall resonator's output before its Ring level. A softer
+// note, or a lower Level, meets a gentler wall. Rattle's gap is a fixed share of kRingRef: in
+// roomlab 0.3 left soft notes never rattling, so it is lower here.
+// Measured through the plugin (Bar, C4, velocity 1, Ring 1): 0.53 and 61. Across String, Bar,
+// Membrane and Bell at C2, C4 and C6 they span 0.24..1.09 and 26..83.
+constexpr float kObjectRef  = 0.5f;
+constexpr float kRingRef    = 60.0f;
+constexpr float kRattleGap  = 0.15f;
+
+// Hilbert pair coefficients (Olli Niemitalo's): two chains of four (a^2 - z^-2) / (1 - a^2 z^-2)
+// sections, 90 degrees apart within 0.7 degrees from about fs/2000 to just under Nyquist. Squared.
+constexpr float kHilbertA2[2][4] = {
+    { 0.6923878f * 0.6923878f, 0.9360654322959f * 0.9360654322959f,
+      0.9882295226860f * 0.9882295226860f, 0.9987488452737f * 0.9987488452737f },
+    { 0.4021921162426f * 0.4021921162426f, 0.8561710882420f * 0.8561710882420f,
+      0.9722909545651f * 0.9722909545651f, 0.9952884791278f * 0.9952884791278f },
+};
+
+// The generated wall materials' shaping parameters: ModalBankModule's, so a wall sounds as the
+// object would in the same material.
+constexpr float kPianoB = 0.0003f;
+constexpr float kPowerK = 1.5f;
 
 // Where along the image-to-mic line the wall is. When the source sits on the wall
 // its image does too, and 0/0 would follow: the source itself is then where the
@@ -70,7 +96,8 @@ inline double spreadGain(double r) { return 1.0 / std::sqrt(std::max(r, 0.1)); }
 bool sameWall(const Room::Wall& a, const Room::Wall& b) {
     return a.absorb == b.absorb && a.bright == b.bright && a.ring == b.ring && a.ringMat == b.ringMat
         && a.ringRatio == b.ringRatio && a.ringT60 == b.ringT60 && a.ringTilt == b.ringTilt
-        && a.link == b.link;
+        && a.link == b.link && a.shift == b.shift && a.flex == b.flex && a.clip == b.clip
+        && a.rattle == b.rattle;
 }
 
 bool sameSettings(const Room::Settings& a, const Room::Settings& b) {
@@ -97,6 +124,7 @@ Room::Room() {
     std::fill_n(mDelay, kDelaySize, 0.0f);
     std::fill_n(mY1, kMaxModes, 0.0f);
     std::fill_n(mY2, kMaxModes, 0.0f);
+    std::memset(mHil, 0, sizeof mHil);
     for (ModalBank& b : mWallBank) b.setSpread(0.0f);
 }
 
@@ -114,6 +142,10 @@ void Room::reset() {
     std::fill_n(mY2, kMaxModes, 0.0f);
     std::fill_n(mLP, 4, 0.0f);
     for (ModalBank& b : mWallBank) b.reset();
+    std::memset(mHil, 0, sizeof mHil);
+    for (int k = 0; k < 4; ++k) { mOscC[k] = 1.0f; mOscS[k] = 0.0f; }
+    std::fill_n(mDisp, 4, 0.0f);
+    std::fill_n(mRattlePrev, 4, 0.0f);
 }
 
 void Room::setSettings(const Settings& s) {
@@ -311,7 +343,33 @@ ROOM_HOT void Room::retunePitch() {
         const double fc = f0 * std::exp2((double)w.bright);
         mLPa[pair] = (fc >= nyquist) ? 0.0f : (float)std::exp(-2.0 * M_PI * fc / fs);
         mRingOn[pair] = w.ring > 0.0f;
+
+        // Wall effects. A shift that starts from off starts its filters clean.
+        const bool shiftOn = w.shift > 0.0f;
+        if (shiftOn && !mShiftOn[pair]) {
+            for (int k = 2 * pair; k < 2 * pair + 2; ++k) {
+                std::memset(&mHil[k], 0, sizeof mHil[k]);
+                mOscC[k] = 1.0f; mOscS[k] = 0.0f;
+            }
+        }
+        mShiftOn[pair] = shiftOn;
+        const double dw = 2.0 * M_PI * (double)w.shift * f0 / fs;
+        for (int k = 2 * pair; k < 2 * pair + 2; ++k) {
+            const double sign = (k & 1) ? -1.0 : 1.0;   // the near wall (image at -x or -y) up
+            mOscCw[k] = (float)std::cos(dw);
+            mOscSw[k] = (float)(sign * std::sin(dw));
+        }
+        mFlexK[pair] = (float)((double)w.flex * spl / kObjectRef);
+        mClipK[pair] = w.clip / kObjectRef;
+        mRattleGap[pair] = kRattleGap * kRingRef;
+        // The crossings are differenced into clicks; this scales a full-level ring that crosses its
+        // gap at the wall's own frequency back to about the ring's level. Below 50 Hz that scale would
+        // grow without bound (the difference of a slow wave is tiny, its clicks are not), so it stops.
+        const double wallHz = std::max(50.0, f0 * (double)w.ringRatio);
+        mRattleK[pair] = (float)((double)w.rattle * fs / (2.0 * M_PI * wallHz) / (1.0 - kRattleGap));
+        mRattleMax[pair] = w.rattle * kRingRef;
     }
+    mFlexA = (float)std::exp(-2.0 * M_PI * std::min(f0, nyquist) / fs);
 
     const Pt images[4] = { { -S.x, S.y }, { 2.0 * W - S.x, S.y }, { S.x, -S.y }, { S.x, 2.0 * D - S.y } };
     for (int k = 0; k < 4; ++k) {
@@ -343,7 +401,26 @@ ROOM_HOT void Room::retunePitch() {
         // wall whose pitch changes starts clean.
         const float wallHz = (float)(f0 * w.ringRatio);
         if (std::fabs(bank.fundamental() - wallHz) > 1e-3f * wallHz) bank.reset();
-        bank.setMaterial(kModalMaterials[std::clamp(w.ringMat, 0, (int)ModalMaterialCount - 1)]);
+        // The object's material list: the static tables, then the generators (as ModalBankModule).
+        const int mat = std::clamp(w.ringMat, 0, (int)ModalMaterialCount + (int)ModalSeriesCount - 1);
+        if (mat < (int)ModalMaterialCount) {
+            bank.setMaterial(kModalMaterials[mat]);
+        } else {
+            if (mat != mGenIdx[pair]) {
+                const ModalSeriesID series = (ModalSeriesID)(mat - (int)ModalMaterialCount);
+                const float param = (series == ModalSeriesPiano) ? kPianoB
+                                  : (series == ModalSeriesPower) ? kPowerK : 0.0f;
+                mGenMat[pair].modes = mGenModes[pair];
+                mGenMat[pair].count = generateModalSeries(series, param, ModalBank::kMaxModes,
+                                                          mGenModes[pair], ModalBank::kMaxModes);
+                mGenIdx[pair] = mat;
+                // The buffer pointer stays the same across generators, so the banks can't see the
+                // change through setMaterial: tell both of the pair's walls.
+                mWallBank[2 * pair].invalidate();
+                mWallBank[2 * pair + 1].invalidate();
+            }
+            bank.setMaterial(mGenMat[pair]);
+        }
         bank.setFundamental(wallHz);
         bank.setDecayT60((float)(w.ringT60 * decayScale));
         bank.setDampTilt(w.ringTilt);
@@ -408,12 +485,39 @@ ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int 
 
         for (int k = 0; k < 4; ++k) {
             const int pair = k >> 1;
-            const float v = readAt(mImage[k].delay);
+            // Flex: the wall gives under the pressure on it (its displacement follows the reflection,
+            // low-passed at f0), so the path, and the delay, lengthens with it.
+            const float delay = std::clamp(mImage[k].delay + mFlexK[pair] * mDisp[k], 1.0f, (float)(kDelaySize - 4));
+            float v = readAt(delay);
+            if (mShiftOn[pair]) {
+                // Shift: the Hilbert pair's two outputs, turned by this path's oscillator, move every
+                // partial by the same number of Hz.
+                Hilbert& h = mHil[k];
+                float c0 = v, c1 = v;
+                for (int j = 0; j < 4; ++j) {
+                    const float y0 = kHilbertA2[0][j] * (c0 + h.y2[0][j]) - h.x2[0][j];
+                    h.x2[0][j] = h.x1[0][j]; h.x1[0][j] = c0; h.y2[0][j] = h.y1[0][j]; h.y1[0][j] = y0;
+                    c0 = y0;
+                    const float y1 = kHilbertA2[1][j] * (c1 + h.y2[1][j]) - h.x2[1][j];
+                    h.x2[1][j] = h.x1[1][j]; h.x1[1][j] = c1; h.y2[1][j] = h.y1[1][j]; h.y1[1][j] = y1;
+                    c1 = y1;
+                }
+                const float i = h.d;
+                h.d = c0;
+                v = i * mOscC[k] + c1 * mOscS[k];   // c1 lags i: + is the upper sideband
+                const float c = mOscC[k] * mOscCw[k] - mOscS[k] * mOscSw[k];
+                mOscS[k] = mOscS[k] * mOscCw[k] + mOscC[k] * mOscSw[k];
+                mOscC[k] = c;
+            }
             const float a = mLPa[pair];
             mLP[k] = a * mLP[k] + (1.0f - a) * v;
             const float lp = mLP[k];
-            m  += mImage[k].gM * lp;
-            sd += mImage[k].gS * lp;
+            // A wall gives only so far: twice the reference level, so the swing stays within twice Flex.
+            mDisp[k] = std::clamp(mFlexA * mDisp[k] + (1.0f - mFlexA) * lp, -2.0f * kObjectRef, 2.0f * kObjectRef);
+            // Clip: unity gain for small signals, toward kObjectRef / drive for loud ones.
+            const float r = lp / (1.0f + mClipK[pair] * std::fabs(lp));
+            m  += mImage[k].gM * r;
+            sd += mImage[k].gS * r;
             if (mRingOn[pair]) {
                 // Linked: the wall rings with what it absorbed, the broadband part
                 // sqrt(absorb) of the low band plus everything the one-pole took.
@@ -428,17 +532,43 @@ ROOM_HOT void Room::processChunk(const float* in, float* outL, float* outR, int 
         ++mWrite;
     }
 
+    // Once a chunk: the oscillators back onto the unit circle (float rounding drifts their level),
+    // and the effects' filter states clear of denormals as a tail fades.
+    auto flushDenormal = [](float& x) { if (std::fabs(x) < kDenormalFloor) x = 0.0f; };
+    for (int k = 0; k < 4; ++k) {
+        flushDenormal(mDisp[k]);
+        if (!mShiftOn[k >> 1]) continue;
+        const float g = 1.0f / std::sqrt(mOscC[k] * mOscC[k] + mOscS[k] * mOscS[k]);
+        mOscC[k] *= g; mOscS[k] *= g;
+        Hilbert& h = mHil[k];
+        for (int c = 0; c < 2; ++c)
+            for (int j = 0; j < 4; ++j) {
+                flushDenormal(h.x1[c][j]); flushDenormal(h.x2[c][j]);
+                flushDenormal(h.y1[c][j]); flushDenormal(h.y2[c][j]);
+            }
+        flushDenormal(h.d);
+    }
+
     // --- wall resonators ---
     if (anyRing) {
         float bl[kMaxBlock], br[kMaxBlock];
         for (int k = 0; k < 4; ++k) {
             if (!mRingOn[k >> 1]) continue;
             mWallBank[k].processBlock(ringIn[k], bl, br, n);
+            const int pair = k >> 1;
+            const float gap = mRattleGap[pair], rk = mRattleK[pair], slapMax = mRattleMax[pair];
+            float prev = mRattlePrev[k];
             for (int s = 0; s < n; ++s) {
-                const float y = bl[s] * (float)M_SQRT2;   // spread 0: undo the pan law
+                float y = bl[s] * (float)M_SQRT2;   // spread 0: undo the pan law
+                // Rattle: a loose panel slaps each time the wall rings past the gap.
+                const float over = y - std::clamp(y, -gap, gap);
+                // Each slap is bounded: a broadband ring differenced would otherwise click far above it.
+                y += std::clamp(rk * (over - prev), -slapMax, slapMax);
+                prev = over;
                 mid[s]  += mRingOutM[k] * y;
                 side[s] += mRingOutS[k] * y;
             }
+            mRattlePrev[k] = prev;
         }
     }
 

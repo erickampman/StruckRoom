@@ -361,7 +361,7 @@ public:
         fMixGroup        = makeGroup("Mix",               colMix());
         fSideGroup       = makeGroup("Side walls",        colSideWalls());
         fFBGroup         = makeGroup("Front / back walls", colFBWalls());
-        fSideGroup->setColumns(4);   // eight controls each: two rows of four
+        fSideGroup->setColumns(4);   // twelve controls each: three rows of four, the effects last
         fFBGroup->setColumns(4);
 
         // Build each param control into its panel, in panel order.
@@ -695,8 +695,8 @@ private:
             y += rowH + gap;
         }
 
-        // Walls tab: the two pairs side by side over two rows' height (two rows of four controls
-        // each), the decay view across the bottom row.
+        // Walls tab: the two pairs side by side over two rows' height (three rows of four controls
+        // each, so a little smaller than elsewhere), the decay view across the bottom row.
         const int halfW = (W - 2 * M - gap) / 2;
         fSideGroup->setAbsolutePos(M, row0);
         fSideGroup->setSize(static_cast<uint>(halfW), static_cast<uint>(2 * rowH + gap));
@@ -709,10 +709,16 @@ private:
         // Knob diameter bounded by the row height (room for label + value) and, via relayout, the
         // cell width. Dropdowns are sized to their cell by relayout(); we only set their scale.
         const float knobD = std::min(74.0f * s, rowH * 0.44f);
+        // A wall cell is a third of the panel's content height; this leaves its knob room for the
+        // label and value (about 0.85 of the other tabs' knobs at the default size).
+        const float wallS = 0.85f * s;
+        const float wallCellH = (2 * rowH + gap - 38 * s) / 3.0f;
+        const float wallKnobD = std::min(knobD * 0.85f, wallCellH * 0.56f);
         for (uint32_t i = 0; i < kParamCount; ++i)
         {
-            if (fKnobs[i])     fKnobs[i]->setDiameter(knobD, s);
-            if (fDropdowns[i]) fDropdowns[i]->setUiScale(s);
+            const bool wall = isSideWall(i) || isFBWall(i);
+            if (fKnobs[i])     fKnobs[i]->setDiameter(wall ? wallKnobD : knobD, wall ? wallS : s);
+            if (fDropdowns[i]) fDropdowns[i]->setUiScale(wall ? wallS : s);
         }
         for (GroupBox* g : panels) g->relayout();
     }
@@ -723,6 +729,15 @@ private:
         g->setTitle(title);
         g->setAccentColor(accent);
         return g;
+    }
+
+    static bool isSideWall(uint32_t i)
+    {
+        return (i >= kParamSideAbsorb && i <= kParamSideLink) || (i >= kParamSideShift && i <= kParamSideRattle);
+    }
+    static bool isFBWall(uint32_t i)
+    {
+        return (i >= kParamFBAbsorb && i <= kParamFBLink) || (i >= kParamFBShift && i <= kParamFBRattle);
     }
 
     GroupBox* groupFor(uint32_t i) const
@@ -749,8 +764,8 @@ private:
         case kParamDirect: case kParamEarly: case kParamLate:
             return fMixGroup.get();
         default:
-            if (i >= kParamSideAbsorb && i <= kParamSideLink) return fSideGroup.get();
-            if (i >= kParamFBAbsorb && i <= kParamFBLink)     return fFBGroup.get();
+            if (isSideWall(i)) return fSideGroup.get();
+            if (isFBWall(i))   return fFBGroup.get();
             return fOutputGroup.get(); // strikePos, brightness
         }
     }
@@ -779,8 +794,8 @@ private:
         case kParamDirect: case kParamEarly: case kParamLate:
             return colMix();
         default:
-            if (i >= kParamSideAbsorb && i <= kParamSideLink) return colSideWalls();
-            if (i >= kParamFBAbsorb && i <= kParamFBLink)     return colFBWalls();
+            if (isSideWall(i)) return colSideWalls();
+            if (isFBWall(i))   return colFBWalls();
             return colOutput();
         }
     }

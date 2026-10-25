@@ -64,7 +64,11 @@
         "ringRatio": "0.500000",
         "ringDecay": "1.500000",
         "ringDamp": "1.000000",
-        "link": "0"
+        "link": "0",
+        "shift": "0.000000",
+        "flex": "0.000000",
+        "clip": "0.000000",
+        "rattle": "0.000000"
       },
       "FrontBackWalls": {
         "absorb": "0.150000",
@@ -74,7 +78,11 @@
         "ringRatio": "0.500000",
         "ringDecay": "1.500000",
         "ringDamp": "1.000000",
-        "link": "0"
+        "link": "0",
+        "shift": "0.000000",
+        "flex": "0.000000",
+        "clip": "0.000000",
+        "rattle": "0.000000"
       }
     }
   }

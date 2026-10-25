@@ -34,8 +34,12 @@ room.
 | Placement | Src X/Y, Mic X/Y | where the object and the listener sit, 0..1 of the room |
 | Mix | Direct, Early, Late | the object's own sound, the reflections, the standing waves. Direct 1, Early 0, Late 0 is plain StruckSynth |
 | Walls (Side, F/B) | Absorb, Bright | broadband absorption and the high-frequency corner (octaves above f0). They filter the reflections and set the room modes' decay |
-| | Ring, Mat, Ratio, Decay, Damp | the wall as a resonator: level (0 = doesn't ring), material, fundamental relative to the note, T60, damping tilt |
+| | Ring, Mat, Ratio, Decay, Damp | the wall as a resonator: level (0 = doesn't ring), material (the object's list, generators included), fundamental relative to the note, T60, damping tilt |
 | | Link | On: the wall rings with the energy it absorbed, not the full incident sound |
+| | Shift | frequency shift of the reflections and the wall's ring, % of f0. The near wall shifts up and the far wall down, so the two sides drift against each other. Small values beat slowly; 10% clangs |
+| | Flex | the wall gives under the sound, so its reflection's path, and pitch, bend with the level: soft notes barely, loud ones more |
+| | Clip | soft clipping of the reflection; louder notes clip harder |
+| | Rattle | the wall resonator buzzes once it rings past a gap (needs Ring above 0); fades out as the ring decays |
 | Global | Width | the M/S pair's side level (was Spread) |
 
 The editor has three tabs. **Object** is the struck object, as in StruckSynth. **Room** shows the

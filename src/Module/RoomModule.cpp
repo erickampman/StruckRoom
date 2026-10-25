@@ -47,7 +47,7 @@ void MIDIRoomModule(const pm::UmpMessage& message, Module* module)
     if (st && pm::isNoteOn(message)) st->pendingStrike = true;
 }
 
-static Room::Wall readWall(Module* module, uint8_t first)
+static Room::Wall readWall(Module* module, uint8_t first, uint8_t fx)
 {
     Room::Wall w;
     w.absorb    = module->getParamValue(first + 0);
@@ -58,6 +58,10 @@ static Room::Wall readWall(Module* module, uint8_t first)
     w.ringT60   = module->getParamValue(first + 5);
     w.ringTilt  = module->getParamValue(first + 6);
     w.link      = module->getParamValue(first + 7) >= 0.5f;
+    w.shift     = module->getParamValue(fx + 0) * 0.01f;   // the parameter is in % of f0
+    w.flex      = module->getParamValue(fx + 1);
+    w.clip      = module->getParamValue(fx + 2);
+    w.rattle    = module->getParamValue(fx + 3);
     return w;
 }
 
@@ -81,8 +85,8 @@ const KPBuffPair* ProcessRoomModule(uint64_t processCallID, uint32_t count, Modu
     s.direct     = module->getParamValue(RoomParamItemDirect);
     s.early      = module->getParamValue(RoomParamItemEarly);
     s.late       = module->getParamValue(RoomParamItemLate);
-    s.wall[0]    = readWall(module, RoomParamItemSideAbsorb);
-    s.wall[1]    = readWall(module, RoomParamItemFBAbsorb);
+    s.wall[0]    = readWall(module, RoomParamItemSideAbsorb, RoomParamItemSideShift);
+    s.wall[1]    = readWall(module, RoomParamItemFBAbsorb, RoomParamItemFBShift);
     st->room.setSettings(s);
 
     if (st->pendingStrike) {

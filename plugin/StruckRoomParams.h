@@ -61,7 +61,7 @@ enum ParamIndex {
    kParamSideAbsorb,        // broadband absorption 0..1
    kParamSideBright,        // HF damping corner, octaves above f0 (8 ~ none)
    kParamSideRing,          // wall resonator level (0 = the wall doesn't ring)
-   kParamSideRingMat,       // the wall's material (the 12 static tables)
+   kParamSideRingMat,       // the wall's material (the object's list)
    kParamSideRingRatio,     // wall fundamental / note
    kParamSideRingDecay,     // wall T60, seconds
    kParamSideRingDamp,      // the wall bank's damping tilt
@@ -74,6 +74,15 @@ enum ParamIndex {
    kParamFBRingDecay,
    kParamFBRingDamp,
    kParamFBLink,
+   // --- Wall effects (appended): side walls, then front/back, the same four each ---
+   kParamSideShift,         // frequency shift, % of f0: the near wall up, the far wall down
+   kParamSideFlex,          // the wall gives under the sound: delay swing, periods of f0
+   kParamSideClip,          // soft-clip drive on the reflection
+   kParamSideRattle,        // the wall resonator buzzes past a gap
+   kParamFBShift,
+   kParamFBFlex,
+   kParamFBClip,
+   kParamFBRattle,
    kParamCount
 };
 
@@ -138,7 +147,7 @@ static constexpr ParamSpec kParams[kParamCount] = {
    {"Side Absorb", "sdAbs",   "",    0.0f,   1.0f,   0.15f, false, false},
    {"Side Bright", "sdBrt",   "oct", 0.0f,   8.0f,   5.0f,  false, false},
    {"Side Ring",  "sdRing",   "",    0.0f,   2.0f,   0.0f,  false, false},
-   {"Side Mat",   "sdMat",    "",    0.0f,  11.0f,   3.0f,  false, true },
+   {"Side Mat",   "sdMat",    "",    0.0f,  25.0f,   3.0f,  false, true },
    {"Side Ratio", "sdRatio",  "",    0.0625f, 4.0f,  0.5f,  true,  false},
    {"Side Decay", "sdDecay",  "s",   0.05f, 20.0f,   1.5f,  true,  false},
    {"Side Damp",  "sdDamp",   "",    0.0f,   3.0f,   1.0f,  false, false},
@@ -147,11 +156,21 @@ static constexpr ParamSpec kParams[kParamCount] = {
    {"F/B Absorb", "fbAbs",    "",    0.0f,   1.0f,   0.15f, false, false},
    {"F/B Bright", "fbBrt",    "oct", 0.0f,   8.0f,   5.0f,  false, false},
    {"F/B Ring",   "fbRing",   "",    0.0f,   2.0f,   0.0f,  false, false},
-   {"F/B Mat",    "fbMat",    "",    0.0f,  11.0f,   3.0f,  false, true },
+   {"F/B Mat",    "fbMat",    "",    0.0f,  25.0f,   3.0f,  false, true },
    {"F/B Ratio",  "fbRatio",  "",    0.0625f, 4.0f,  0.5f,  true,  false},
    {"F/B Decay",  "fbDecay",  "s",   0.05f, 20.0f,   1.5f,  true,  false},
    {"F/B Damp",   "fbDamp",   "",    0.0f,   3.0f,   1.0f,  false, false},
    {"F/B Link",   "fbLink",   "",    0.0f,   1.0f,   0.0f,  false, true },
+   // Wall effects: side
+   {"Side Shift", "sdShift",  "%",   0.0f,  10.0f,   0.0f,  false, false},
+   {"Side Flex",  "sdFlex",   "",    0.0f,   1.0f,   0.0f,  false, false},
+   {"Side Clip",  "sdClip",   "",    0.0f,  10.0f,   0.0f,  false, false},
+   {"Side Rattle","sdRattle", "",    0.0f,   1.0f,   0.0f,  false, false},
+   // Wall effects: front/back
+   {"F/B Shift",  "fbShift",  "%",   0.0f,  10.0f,   0.0f,  false, false},
+   {"F/B Flex",   "fbFlex",   "",    0.0f,   1.0f,   0.0f,  false, false},
+   {"F/B Clip",   "fbClip",   "",    0.0f,  10.0f,   0.0f,  false, false},
+   {"F/B Rattle", "fbRattle", "",    0.0f,   1.0f,   0.0f,  false, false},
 };
 
 // Material picker labels (order matches ModalBankMaterial in pm_params.h). Null-terminated so the
@@ -164,8 +183,10 @@ static constexpr const char* kMaterialNames[] = {
    nullptr,
 };
 static_assert(sizeof(kMaterialNames) / sizeof(kMaterialNames[0]) - 1
-                 == std::size_t(kParams[kParamMaterial].max) + 1,
-              "kMaterialNames and the Material parameter's range disagree");
+                 == std::size_t(kParams[kParamMaterial].max) + 1
+              && kParams[kParamSideRingMat].max == kParams[kParamMaterial].max
+              && kParams[kParamFBRingMat].max == kParams[kParamMaterial].max,
+              "kMaterialNames and the Material parameters' ranges disagree");
 
 // kParams is indexed by ParamIndex, so a swapped pair of rows compiles fine and silently cross-wires
 // two controls (PlainOldSynth's Effect Mix and Spread once did exactly that). The table is small, so
@@ -202,7 +223,11 @@ static_assert(symbolIs(kParamVoiceMode, "voices") && symbolIs(kParamGlide, "glid
               && symbolIs(kParamFBAbsorb, "fbAbs") && symbolIs(kParamFBBright, "fbBrt")
               && symbolIs(kParamFBRing, "fbRing") && symbolIs(kParamFBRingMat, "fbMat")
               && symbolIs(kParamFBRingRatio, "fbRatio") && symbolIs(kParamFBRingDecay, "fbDecay")
-              && symbolIs(kParamFBRingDamp, "fbDamp") && symbolIs(kParamFBLink, "fbLink"),
+              && symbolIs(kParamFBRingDamp, "fbDamp") && symbolIs(kParamFBLink, "fbLink")
+              && symbolIs(kParamSideShift, "sdShift") && symbolIs(kParamSideFlex, "sdFlex")
+              && symbolIs(kParamSideClip, "sdClip") && symbolIs(kParamSideRattle, "sdRattle")
+              && symbolIs(kParamFBShift, "fbShift") && symbolIs(kParamFBFlex, "fbFlex")
+              && symbolIs(kParamFBClip, "fbClip") && symbolIs(kParamFBRattle, "fbRattle"),
               "kParams rows are out of ParamIndex order");
 
 // --- dropdowns -------------------------------------------------------------------------------
@@ -212,10 +237,6 @@ static_assert(symbolIs(kParamVoiceMode, "voices") && symbolIs(kParamGlide, "glid
 
 static constexpr const char* kVoiceModeChoices[]   = { "Mono", "Poly 4", "Poly 10", "Poly 20", "Poly 32", nullptr };
 static constexpr const char* kOffOnChoices[]       = { "Off", "On", nullptr };
-// A wall rings as one of the static material tables (the generators need a per-instance buffer).
-static constexpr const char* kWallMaterialNames[]  = {
-   "String", "Bar", "Tuned Bar", "Membrane", "Open Tube", "Closed Tube", "Tine", "Bell",
-   "Guitar Body", "Violin Body", "Soundboard", "Generic Body", nullptr };
 static constexpr const char* kStrikeTypeChoices[]  = { "Mallet", "Noise",   nullptr };
 static constexpr const char* kContactModeChoices[] = { "Note-Rel", "Wall-Clk", nullptr };
 static constexpr const char* kMpeChoices[]         = { "Off", "On",         nullptr };
@@ -229,7 +250,7 @@ inline const char* const* choicesFor(uint32_t index)
    case kParamMpe:         return kMpeChoices;
    case kParamMaterial:    return kMaterialNames;
    case kParamSideRingMat:
-   case kParamFBRingMat:   return kWallMaterialNames;
+   case kParamFBRingMat:   return kMaterialNames;   // a wall can be anything the object can
    case kParamSideLink:
    case kParamFBLink:      return kOffOnChoices;
    default:                return nullptr;

@@ -309,7 +309,7 @@ static const ModuleParamConstants roomConstants[] = {
    {"sideAbsorb",   RoomParamItemSideAbsorb,    0, 0, nullptr, 0.0f, 1.0f, 0.15f, 0},
    {"sideBright",   RoomParamItemSideBright,    0, 0, nullptr, 0.0f, 8.0f, 5.0f, 0},
    {"sideRing",     RoomParamItemSideRing,      0, 0, nullptr, 0.0f, 2.0f, 0.0f, 0},
-   {"sideRingMat",  RoomParamItemSideRingMat,   0, 0, nullptr, 0.0f, 11.0f, 3.0f, 0},
+   {"sideRingMat",  RoomParamItemSideRingMat,   0, 0, nullptr, 0.0f, 25.0f, 3.0f, 0},
    {"sideRingRatio",RoomParamItemSideRingRatio, 0, 0, nullptr, 0.0625f, 4.0f, 0.5f, 0},
    {"sideRingT60",  RoomParamItemSideRingT60,   0, 0, nullptr, 0.05f, 20.0f, 1.5f, 0},
    {"sideRingTilt", RoomParamItemSideRingTilt,  0, 0, nullptr, 0.0f, 3.0f, 1.0f, 0},
@@ -317,11 +317,19 @@ static const ModuleParamConstants roomConstants[] = {
    {"fbAbsorb",     RoomParamItemFBAbsorb,      0, 0, nullptr, 0.0f, 1.0f, 0.15f, 0},
    {"fbBright",     RoomParamItemFBBright,      0, 0, nullptr, 0.0f, 8.0f, 5.0f, 0},
    {"fbRing",       RoomParamItemFBRing,        0, 0, nullptr, 0.0f, 2.0f, 0.0f, 0},
-   {"fbRingMat",    RoomParamItemFBRingMat,     0, 0, nullptr, 0.0f, 11.0f, 3.0f, 0},
+   {"fbRingMat",    RoomParamItemFBRingMat,     0, 0, nullptr, 0.0f, 25.0f, 3.0f, 0},
    {"fbRingRatio",  RoomParamItemFBRingRatio,   0, 0, nullptr, 0.0625f, 4.0f, 0.5f, 0},
    {"fbRingT60",    RoomParamItemFBRingT60,     0, 0, nullptr, 0.05f, 20.0f, 1.5f, 0},
    {"fbRingTilt",   RoomParamItemFBRingTilt,    0, 0, nullptr, 0.0f, 3.0f, 1.0f, 0},
    {"fbLink",       RoomParamItemFBLink,        0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"sideShift",    RoomParamItemSideShift,     0, 0, nullptr, 0.0f, 10.0f, 0.0f, 0},   // % of f0
+   {"sideFlex",     RoomParamItemSideFlex,      0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"sideClip",     RoomParamItemSideClip,      0, 0, nullptr, 0.0f, 10.0f, 0.0f, 0},
+   {"sideRattle",   RoomParamItemSideRattle,    0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"fbShift",      RoomParamItemFBShift,       0, 0, nullptr, 0.0f, 10.0f, 0.0f, 0},
+   {"fbFlex",       RoomParamItemFBFlex,        0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
+   {"fbClip",       RoomParamItemFBClip,        0, 0, nullptr, 0.0f, 10.0f, 0.0f, 0},
+   {"fbRattle",     RoomParamItemFBRattle,      0, 0, nullptr, 0.0f, 1.0f, 0.0f, 0},
 };
 const ModuleParamConstantsGroup roomConstantsGroup = {
    const_cast<char*>("room"), sizeof(roomConstants) / sizeof(roomConstants[0]), roomConstants};

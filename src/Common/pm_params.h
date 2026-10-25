@@ -428,8 +428,17 @@ enum RoomParamItem : NSUInteger {
    RoomParamItemFBRingT60,
    RoomParamItemFBRingTilt,
    RoomParamItemFBLink,
+   RoomParamItemSideShift,       // wall effects (appended): side walls, then front/back, the same four
+   RoomParamItemSideFlex,
+   RoomParamItemSideClip,
+   RoomParamItemSideRattle,
+   RoomParamItemFBShift,
+   RoomParamItemFBFlex,
+   RoomParamItemFBClip,
+   RoomParamItemFBRattle,
 };
 inline constexpr NSUInteger kRoomWallItems = RoomParamItemFBAbsorb - RoomParamItemSideAbsorb;
+inline constexpr NSUInteger kRoomWallFxItems = RoomParamItemFBShift - RoomParamItemSideShift;
 
 // Material selector for ModalBankParamItemMaterial. Order MUST match kModalMaterials
 // (ModalMaterials.hpp) for the static tables, then the procedural generators whose order MUST

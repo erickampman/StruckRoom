@@ -5,10 +5,11 @@
 //  scales with the note, driven by the object's sound (a ModalBank's output).
 //
 //    object -> direct path                     delay, 1/sqrt(r)
-//           -> 4 first-order wall reflections  delay, wall absorption filter
+//           -> 4 first-order wall reflections  delay, wall absorption filter, and
+//                                              the wall effects: flex, shift, clip
 //           -> 4 wall resonators               a ModalBank per wall, rung by the
 //                                              sound reaching it, struck where
-//                                              that sound meets the wall
+//                                              that sound meets the wall; rattle
 //           -> room modes (nx, ny)             the standing waves: gains from the
 //                                              source and listener positions,
 //                                              T60s from the walls' absorption
@@ -54,11 +55,19 @@ public:
         float absorb    = 0.15f;     // broadband absorption, 0..1
         float bright    = 5.0f;      // HF damping corner, octaves above f0 (8 ~ flat)
         float ring      = 0.0f;      // wall resonator level, 0 = the wall doesn't ring
-        int   ringMat   = 3;         // index into kModalMaterials (static tables only)
+        int   ringMat   = 3;         // the object's material list: the static tables, then the generators
         float ringRatio = 0.5f;      // wall fundamental / note fundamental
         float ringT60   = 1.5f;      // seconds at note 60
         float ringTilt  = 1.0f;      // the wall bank's DampTilt
         bool  link      = false;     // ring with the ABSORBED energy, not the incident sound
+
+        // Wall effects (tools/roomlab exp5). Flex, Clip and Rattle depend on level, against the
+        // object's level at full velocity (see kObjectRef in Room.cpp): softer notes, gentler walls.
+        float shift  = 0.0f;         // frequency shift, fraction of f0: the near wall up, the far down;
+                                     // the wall resonators hear it too
+        float flex   = 0.0f;         // the wall moves with the pressure on it: delay swing, periods of f0
+        float clip   = 0.0f;         // soft-clip drive on the reflection, x/(1+|x|)
+        float rattle = 0.0f;         // the wall resonator buzzes past a gap
     };
 
     struct Settings {
@@ -130,6 +139,26 @@ private:
     float     mRingInG[4]  = {0, 0, 0, 0};
     float     mRingOutM[4] = {0, 0, 0, 0}, mRingOutS[4] = {0, 0, 0, 0};
     bool      mRingOn[2]   = {false, false};
+    // A generated wall material, per pair: filled when the pair's material changes.
+    ModalMode     mGenModes[2][ModalBank::kMaxModes];
+    ModalMaterial mGenMat[2] = { { nullptr, 0, "Gen" }, { nullptr, 0, "Gen" } };
+    int           mGenIdx[2] = { -1, -1 };
+
+    // --- wall effects, per path (0,1 side walls; 2,3 front/back) -------------------
+    struct Hilbert {                 // two chains of four allpasses, outputs 90 degrees apart
+        float x1[2][4], x2[2][4], y1[2][4], y2[2][4];
+        float d;                     // the first chain's extra sample of delay
+    };
+    Hilbert mHil[4];
+    float mOscC[4] = {1, 1, 1, 1}, mOscS[4] = {0, 0, 0, 0};   // each path's quadrature oscillator
+    float mOscCw[4] = {1, 1, 1, 1}, mOscSw[4] = {0, 0, 0, 0}; // its rotation per sample
+    bool  mShiftOn[2] = {false, false};
+    float mDisp[4] = {0, 0, 0, 0};   // flex: the wall's displacement
+    float mFlexK[2] = {0, 0};        // samples of delay per unit of displacement
+    float mFlexA = 0.0f;             // the displacement's one-pole, at f0
+    float mClipK[2] = {0, 0};        // drive / kObjectRef
+    float mRattlePrev[4] = {0, 0, 0, 0};
+    float mRattleGap[2] = {0, 0}, mRattleK[2] = {0, 0}, mRattleMax[2] = {0, 0};
 
     Settings mSettings, mPending;
     bool     mGeomDirty = true, mPitchDirty = true, mSettingsDirty = false;

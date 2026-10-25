@@ -37,11 +37,15 @@ Room::Settings randomSettings(std::mt19937& rng) {
         w.absorb = uni(rng, 0.0f, 1.0f);
         w.bright = uni(rng, 0.0f, 8.0f);
         w.ring = uni(rng, 0.0f, 2.0f);
-        w.ringMat = (int)uni(rng, 0.0f, 11.99f);
+        w.ringMat = (int)uni(rng, 0.0f, 25.99f);   // the static tables and the generators
         w.ringRatio = uni(rng, 0.0625f, 4.0f);
         w.ringT60 = uni(rng, 0.05f, 20.0f);
         w.ringTilt = uni(rng, 0.0f, 3.0f);
         w.link = uni(rng, 0.0f, 1.0f) > 0.5f;
+        w.shift = uni(rng, 0.0f, 1.0f) > 0.5f ? uni(rng, 0.0f, 0.1f) : 0.0f;
+        w.flex = uni(rng, 0.0f, 1.0f);
+        w.clip = uni(rng, 0.0f, 10.0f);
+        w.rattle = uni(rng, 0.0f, 1.0f);
     }
     return s;
 }
@@ -61,6 +65,12 @@ Room::Settings edgeSettings(int k) {
         w.ring = 2.0f;
         w.link = (k & 256) != 0;
         w.ringRatio = (k & 512) ? 4.0f : 0.0625f;
+        // The wall effects off or at full, and a generated material or a table. The bits above are
+        // all taken, so these cycle at co-prime periods: every combination meets every corner.
+        w.ringMat = (k % 3 == 0) ? 25 : 3;
+        w.shift = (k % 5 == 0) ? 0.1f : 0.0f;
+        w.flex = w.rattle = (k % 7 < 3) ? 1.0f : 0.0f;
+        w.clip = (k % 7 < 3) ? 10.0f : 0.0f;
     }
     return s;
 }

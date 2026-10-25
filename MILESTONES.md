@@ -12,7 +12,11 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
 - [ ] Rename leftovers: help page still describes StruckSynth
 - [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
-- [ ] By hand: listen to exp5 and decide whether any goes into the plugin (each would add Walls controls)
+- [x] Listened to exp5 (2026-10-25): all four go in, one knob each
+- [x] Wall effects in the plugin: Shift, Flex, Clip, Rattle per wall pair (8 params, appended), third row of the Walls tab
+- [x] Wall materials: the object's full list (26), generators included
+- [x] By hand: the Walls tab's three rows checked (2026-10-25)
+- [ ] By hand: listen to the wall effects in a host
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
