@@ -293,7 +293,7 @@ h1.card, h2.card, h3.card {
 <div class="callout callout-note card">
 <div class="callout-content">
 <h2 id="panel">The Panel</h2>
-<p><strong>The header:</strong> the Unlikelyware logo (a click opens unlikelyware.com), the title, and the <strong>Preset</strong> menu.</p>
+<p><strong>The header:</strong> the Unlikelyware logo (a click opens unlikelyware.com), the title, <strong>Save</strong> and <strong>Load</strong> (see <a href="#presets">Presets</a>), <strong>Help</strong>, and the <strong>Preset</strong> menu.</p>
 <p><strong>Below it, three rows:</strong></p>
 <ul>
 <li><strong>Top:</strong> the <a href="#spectrum">spectrum</a>, and the <strong>Strike</strong> panel.</li>
@@ -478,7 +478,13 @@ h1.card, h2.card, h3.card {
 <ul>
 <li><strong>Choosing a preset sets every sound parameter</strong>, Voices and the Expression knobs included. It leaves the <strong>MPE</strong> switch alone.</li>
 <li>The menu shows <strong>--</strong> until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.</li>
-<li>There's no way to save your own presets in StruckRoom: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.</li>
+</ul>
+<p><strong>Your own patches:</strong> <strong>Save</strong> and <strong>Load</strong>, left of Help, write the patch to a file and read one back, through the system's file dialog. The first time, the dialog opens on <strong>Documents/StruckRoom</strong>; after that, on the last folder you used.</p>
+<ul>
+<li>A saved patch has every sound parameter, like a factory preset, and leaves out <strong>MPE</strong>. Loading one sets those parameters and leaves MPE alone.</li>
+<li>The menu then shows the patch's name, dimmed, in place of a factory preset's.</li>
+<li>The file is the same JSON as the factory presets, so a patch you save can be put in the source's <code>Presets</code> folder to build it in as a factory preset.</li>
+<li>The host still saves the patch with its project, whether or not you saved it to a file.</li>
 </ul>
 </div>
 </div>

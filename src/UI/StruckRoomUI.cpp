@@ -7,6 +7,16 @@
 //   Walls:  the two wall pairs side by side, over a RoomDecay view of every room mode's T60.
 // Every tab's widgets exist all the time; switching tabs only shows and hides them.
 
+// Before DPF's headers: CoreFoundation's MacTypes.h declares a global Point, ambiguous with DGL's
+// once DPF's using-declarations are in scope.
+#ifndef _WIN32
+#include <pwd.h>                             // presetDir: the account's home folder
+#include <unistd.h>
+#endif
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>   // the idle timer when the host has none (startIdleTimer)
+#endif
+
 #include "DistrhoUI.hpp"
 
 #include "src/DistrhoUIInternal.hpp" // DPF's UIExporter (DPF_ROOT_DIR/distrho is on the include path)
@@ -15,7 +25,9 @@
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -26,6 +38,7 @@
 #include "EmbeddedResources.hpp" // build-time codegen: logo PNG and help page bytes
 #include "GeneratedPresets.h"     // build-time codegen from Presets/*.json (see tools/gen_presets.py)
 #include "GroupBox.hpp"
+#include "HeaderButton.hpp"
 #include "HelpButton.hpp"
 #include "Knob.hpp"
 #include "Logo.hpp"
@@ -34,6 +47,7 @@
 #include "TabBar.hpp"
 #include "PresetKeys.hpp"         // param -> preset-JSON key map, shared with the dumper
 #include "PresetDump.hpp"         // dev-only JSON patch dumper (no-op unless STRUCKROOM_PRESET_DUMP=1)
+#include "PresetFile.hpp"         // Save / Load: the patch as preset JSON
 
 #include "ModalBank.hpp"        // framework-free core, for the spectrum visual
 #include "ModalGenerators.hpp"  // procedural mode series
@@ -50,6 +64,7 @@ using namespace struckroom;  // params (kParams, ParamIndex, kMaterialNames)
 using DGL_NAMESPACE::Color;
 using DGL_NAMESPACE::Dropdown;
 using DGL_NAMESPACE::GroupBox;
+using DGL_NAMESPACE::HeaderButton;
 using DGL_NAMESPACE::HelpButton;
 using DGL_NAMESPACE::Knob;
 using DGL_NAMESPACE::Logo;
@@ -419,6 +434,10 @@ public:
         });
         fHelpButton->setLabel("Help");
 
+        // Save / Load the patch as a preset file (PresetFile.hpp), through the system file dialog.
+        fSaveButton = std::make_unique<HeaderButton>(this, "Save", [this] { browseForPreset(true); });
+        fLoadButton = std::make_unique<HeaderButton>(this, "Load", [this] { browseForPreset(false); });
+
         fMenu = std::make_unique<PopupMenu>(this, this); // created last → draws on top
 
         pushSpectrum();
@@ -528,31 +547,140 @@ protected:
         if (affectsRoomViews(id)) pushRoomViews();
     }
 
-    // Apply every param the selected preset has a value for (looked up by "module.item" key via
-    // kPresetKeys — the same mapping PresetDump.hpp uses to write these files). Params the preset
-    // doesn't mention keep their current value. parameterChanged() already syncs the widget and
-    // the spectrum for each param, so it's reused here instead of duplicating that dispatch.
+    // Apply every param the preset has a value for (looked up by "module.item" key via kPresetKeys —
+    // the same mapping PresetFile.hpp uses to write these files). Params the preset doesn't mention
+    // keep their current value; values are clamped to the param's range, since a loaded file may
+    // come from anywhere. parameterChanged() already syncs the widget and the spectrum for each
+    // param, so it's reused here instead of duplicating that dispatch.
+    template <typename Find>
+    void applyPresetValues(Find find)
+    {
+        for (uint32_t i = 0; i < kParamCount; ++i)
+        {
+            const std::string key = std::string(kPresetKeys[i].module) + "." + kPresetKeys[i].item;
+            float v;
+            if (!find(key, v)) continue;
+            v = std::clamp(v, kParams[i].min, kParams[i].max);
+            if (kParams[i].integer) v = std::round(v);
+            editParameter(i, true);
+            setParameterValue(i, v);
+            editParameter(i, false);
+            parameterChanged(i, v); // updates fValues[i], the widget, and the spectrum
+        }
+    }
+
     void applyPreset(int index)
     {
         if (index < 0 || index >= kPresetCount) return;
         const PresetEntry& preset = kPresets[index];
-        for (uint32_t i = 0; i < kParamCount; ++i)
-        {
-            const std::string key = std::string(kPresetKeys[i].module) + "." + kPresetKeys[i].item;
+        applyPresetValues([&](const std::string& key, float& v) {
             for (int j = 0; j < preset.count; ++j)
-            {
-                if (key == preset.values[j].key)
-                {
-                    const float v = preset.values[j].value;
-                    editParameter(i, true);
-                    setParameterValue(i, v);
-                    editParameter(i, false);
-                    parameterChanged(i, v); // updates fValues[i], the widget, and the spectrum
-                    break;
-                }
-            }
-        }
+                if (key == preset.values[j].key) { v = preset.values[j].value; return true; }
+            return false;
+        });
         if (fPresetDropdown) fPresetDropdown->setIndex(index);
+        fPatchName = preset.name; // Save offers it as the file name
+    }
+
+    /* -- Save / Load ------------------------------------------------------ */
+    // The dialog is asynchronous: openFileBrowser() returns at once and the chosen path arrives in
+    // uiFileBrowserSelected(), so fBrowsing remembers which of the two asked. A second click opens
+    // a new dialog in place of one still open (DPF closes the old one), so a result that never
+    // arrives can't leave the buttons dead.
+    enum class Browse { None, Save, Load };
+
+    void browseForPreset(bool saving)
+    {
+        const std::string dir = presetDir();
+        const std::string defaultName = (fPatchName.empty() ? std::string("Untitled") : fPatchName) + ".json";
+        FileBrowserOptions opts;
+        opts.saving      = saving;
+        opts.title       = saving ? "Save StruckRoom Patch" : "Load StruckRoom Patch";
+        opts.startDir    = dir.empty() ? nullptr : dir.c_str();
+        opts.defaultName = saving ? defaultName.c_str() : nullptr;
+        opts.extension   = saving ? nullptr : "json";
+        fBrowsing = saving ? Browse::Save : Browse::Load;
+        if (!openFileBrowser(opts))
+            fBrowsing = Browse::None;
+    }
+
+    void uiFileBrowserSelected(const char* filename) override
+    {
+        const Browse mode = fBrowsing;
+        fBrowsing = Browse::None;
+        if (filename == nullptr || filename[0] == '\0') return; // cancelled
+
+        namespace fs = std::filesystem;
+        fs::path path(filename);
+        if (mode == Browse::Save)
+        {
+            if (!path.has_extension()) path += ".json";
+            const std::string name = path.stem().string();
+            if (!writePresetFile(path.string(), fValues, name))
+            {
+                std::fprintf(stderr, "[StruckRoom] could not save %s\n", path.string().c_str());
+                showStatus("Couldn't save");
+                return;
+            }
+            showPatchName(name);
+        }
+        else if (mode == Browse::Load)
+        {
+            PresetFileData data;
+            if (!readPresetFile(path.string(), data))
+            {
+                std::fprintf(stderr, "[StruckRoom] %s is not a StruckRoom preset\n",
+                             path.string().c_str());
+                showStatus("Couldn't load");
+                return;
+            }
+            applyPresetValues([&](const std::string& key, float& v) {
+                for (const auto& kv : data.values)
+                    if (key == kv.first) { v = kv.second; return true; }
+                return false;
+            });
+            // Named as the factory presets are (tools/gen_presets.py): meta.name, else the file stem.
+            const bool hasName = !data.name.empty() && data.name != "Untitled";
+            showPatchName(hasName ? data.name : path.stem().string());
+        }
+        else return;
+        fLastDir = path.parent_path().string();
+    }
+
+    // A saved or loaded patch is not a factory preset: the menu shows its name, dimmed, with none
+    // of the factory entries ticked.
+    void showPatchName(const std::string& name)
+    {
+        fPatchName = name;
+        if (fPresetDropdown) { fPresetDropdown->setPlaceholder(name); fPresetDropdown->setIndex(-1); }
+    }
+
+    // A failed Save / Load says so in the menu, where the patch name would go: stderr is lost in most
+    // hosts. Unlike showPatchName(), it leaves the name Save offers alone.
+    void showStatus(const std::string& text)
+    {
+        if (fPresetDropdown) { fPresetDropdown->setPlaceholder(text); fPresetDropdown->setIndex(-1); }
+    }
+
+    // The last folder used, else Documents/StruckRoom (made on first use), else the home folder.
+    // The home folder is the account's, not $HOME: in a sandboxed host process (Logic runs AUs in
+    // one) $HOME is the sandbox's container. There, making the folder fails and the dialog opens on
+    // the home folder; the dialog itself grants access to whatever is picked.
+    std::string presetDir() const
+    {
+        if (!fLastDir.empty()) return fLastDir;
+        namespace fs = std::filesystem;
+        const char* home = nullptr;
+#ifndef _WIN32
+        if (const passwd* pw = getpwuid(getuid())) home = pw->pw_dir;
+#endif
+        if (home == nullptr) home = std::getenv("HOME");
+        if (home == nullptr) home = std::getenv("USERPROFILE");
+        if (home == nullptr) return "";
+        std::error_code ec;
+        const fs::path dir = fs::path(home) / "Documents" / "StruckRoom";
+        fs::create_directories(dir, ec);
+        return ec ? std::string(home) : dir.string();
     }
 
     /* -- drawing / layout ------------------------------------------------- */
@@ -632,6 +760,16 @@ private:
         fHelpButton->setUiScale(s);
         fHelpButton->setSize(static_cast<uint>(helpW), static_cast<uint>(presetH));
         fHelpButton->setAbsolutePos(W - M - presetW - helpW, static_cast<int>(4 * s));
+
+        // Save and Load, left of Help, their boxes level with the others'.
+        const int fileW = static_cast<int>(52 * s);
+        const int loadX = W - M - presetW - helpW - fileW;
+        fLoadButton->setUiScale(s);
+        fLoadButton->setSize(static_cast<uint>(fileW), static_cast<uint>(presetH));
+        fLoadButton->setAbsolutePos(loadX, static_cast<int>(4 * s));
+        fSaveButton->setUiScale(s);
+        fSaveButton->setSize(static_cast<uint>(fileW), static_cast<uint>(presetH));
+        fSaveButton->setAbsolutePos(loadX - fileW, static_cast<int>(4 * s));
 
         // 3 rows under the header. Within a row the width is split by the cells each panel needs (its
         // control count), so controls get similar widths everywhere instead of a 2-control panel taking
@@ -874,6 +1012,10 @@ private:
     std::unique_ptr<Logo>          fLogo;
     std::unique_ptr<Dropdown>      fPresetDropdown;
     std::unique_ptr<HelpButton>    fHelpButton;
+    std::unique_ptr<HeaderButton>  fSaveButton, fLoadButton;
+    Browse                         fBrowsing = Browse::None;
+    std::string                    fPatchName;          // the saved / loaded patch, "" for none yet
+    std::string                    fLastDir;            // where the last Save / Load went
     const clap_plugin_t*           fPlugin = nullptr;   // the raw CLAP plugin (see plugin_gui.h)
     float                          fValues[kParamCount];
     bool                           fHasFont = false;
@@ -915,6 +1057,9 @@ struct GuiState {
     double appliedScale = 0.0;   // the scale the UIExporter's pixel size was last derived with
     bool timerRegistered = false;
     clap_id timerId = 0;
+#ifdef __APPLE__
+    CFRunLoopTimerRef ownTimer = nullptr;   // when the host has no timer-support (startIdleTimer)
+#endif
 };
 
 #ifdef __APPLE__
@@ -954,6 +1099,52 @@ constexpr const char* kWindowApi = CLAP_WINDOW_API_COCOA;
 constexpr const char* kWindowApi = CLAP_WINDOW_API_X11;
 #endif
 
+// The UI's idle (ss_gui_on_timer) runs on a host timer. Without idle, DPF never collects the file
+// dialog's result (Load and Save do nothing) and the UI's own uiIdle() never runs. clap-wrapper's
+// AUv2 host has no timers (its register_timer returns false), so on macOS the UI then runs its own
+// on the main run loop, in the common modes so it keeps firing while a menu or sheet is up.
+void startIdleTimer(GuiState* gui)
+{
+    if (gui->timerRegistered) return;
+    const clap_host_t* host = ss_plugin_host(gui->plugin);
+    const auto* timer = static_cast<const clap_host_timer_support_t*>(
+        host->get_extension(host, CLAP_EXT_TIMER_SUPPORT));
+    if (timer != nullptr && timer->register_timer(host, 16 /* ~60fps */, &gui->timerId)) {
+        gui->timerRegistered = true;
+        return;
+    }
+#ifdef __APPLE__
+    if (gui->ownTimer != nullptr) return;
+    CFRunLoopTimerContext context = { 0, gui, nullptr, nullptr, nullptr };
+    gui->ownTimer = CFRunLoopTimerCreate(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent() + 0.016, 0.016,
+                                         0, 0,
+                                         [](CFRunLoopTimerRef, void* info) {
+                                             ss_gui_on_timer(static_cast<GuiState*>(info)->plugin, 0);
+                                         },
+                                         &context);
+    if (gui->ownTimer != nullptr)
+        CFRunLoopAddTimer(CFRunLoopGetMain(), gui->ownTimer, kCFRunLoopCommonModes);
+#endif
+}
+
+void stopIdleTimer(GuiState* gui)
+{
+    if (gui->timerRegistered) {
+        const clap_host_t* host = ss_plugin_host(gui->plugin);
+        const auto* timer = static_cast<const clap_host_timer_support_t*>(
+            host->get_extension(host, CLAP_EXT_TIMER_SUPPORT));
+        if (timer != nullptr) timer->unregister_timer(host, gui->timerId);
+        gui->timerRegistered = false;
+    }
+#ifdef __APPLE__
+    if (gui->ownTimer != nullptr) {
+        CFRunLoopTimerInvalidate(gui->ownTimer);
+        CFRelease(gui->ownTimer);
+        gui->ownTimer = nullptr;
+    }
+#endif
+}
+
 bool gui_is_api_supported(const clap_plugin_t*, const char* api, bool isFloating)
 {
     return !isFloating && std::strcmp(api, kWindowApi) == 0;
@@ -981,12 +1172,7 @@ void gui_destroy(const clap_plugin_t* plugin)
     ss_plugin_set_gui(plugin, nullptr);
     if (gui == nullptr) return;
 
-    if (gui->timerRegistered) {
-        const clap_host_t* host = ss_plugin_host(plugin);
-        const auto* timer = static_cast<const clap_host_timer_support_t*>(
-            host->get_extension(host, CLAP_EXT_TIMER_SUPPORT));
-        if (timer != nullptr) timer->unregister_timer(host, gui->timerId);
-    }
+    stopIdleTimer(gui);
     delete gui;   // the UIExporter is destroyed here, which tears the UI down
 }
 
@@ -1070,6 +1256,9 @@ bool gui_set_parent(const clap_plugin_t* plugin, const clap_window_t* window)
         // size instead, at the scale of the window it is actually in.
         applySize(gui);
     }
+    // Here as well as in show(): clap-wrapper's AUv2 view never calls show() unless its local patch
+    // (patches/clap-wrapper--auv2-gui-show.patch) is applied, and without idle Load / Save get no file.
+    startIdleTimer(gui);
     return true;
 }
 
@@ -1082,13 +1271,7 @@ bool gui_show(const clap_plugin_t* plugin)
     auto* gui = static_cast<GuiState*>(ss_plugin_get_gui(plugin));
     if (gui == nullptr || !gui->exporter) return false;
 
-    if (!gui->timerRegistered) {
-        const clap_host_t* host = ss_plugin_host(plugin);
-        const auto* timer = static_cast<const clap_host_timer_support_t*>(
-            host->get_extension(host, CLAP_EXT_TIMER_SUPPORT));
-        if (timer != nullptr && timer->register_timer(host, 16 /* ~60fps */, &gui->timerId))
-            gui->timerRegistered = true;
-    }
+    startIdleTimer(gui);
     return true;
 }
 
@@ -1097,13 +1280,7 @@ bool gui_hide(const clap_plugin_t* plugin)
     auto* gui = static_cast<GuiState*>(ss_plugin_get_gui(plugin));
     if (gui == nullptr || !gui->exporter) return false;
 
-    if (gui->timerRegistered) {
-        const clap_host_t* host = ss_plugin_host(plugin);
-        const auto* timer = static_cast<const clap_host_timer_support_t*>(
-            host->get_extension(host, CLAP_EXT_TIMER_SUPPORT));
-        if (timer != nullptr) timer->unregister_timer(host, gui->timerId);
-        gui->timerRegistered = false;
-    }
+    stopIdleTimer(gui);
     return true;
 }
 

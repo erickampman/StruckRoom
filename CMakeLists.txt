@@ -72,8 +72,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
 endif()
 
 # --- presets: Presets/*.json compiled in as a C++ array, not loaded at runtime -------------
-# Avoids any runtime JSON parser in the plugin and doesn't depend on CLAP's own preset-discovery
-# extension — the UI presents its own dropdown. Adding/removing a preset file requires
+# Factory presets need no file on disk and don't depend on CLAP's own preset-discovery extension —
+# the UI presents its own dropdown. (The UI's Save / Load reads and writes the same JSON for the
+# user's own patches: src/UI/PresetFile.hpp.) Adding/removing a preset file requires
 # reconfiguring (CONFIGURE_DEPENDS re-globs on build, but a brand new file still needs `cmake -B
 # build -S .` rerun once to pick up the new match).
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -114,8 +115,9 @@ add_custom_target(generate_resources DEPENDS "${STRUCKROOM_RESOURCES_HPP}" "${ST
 # generated CLAP wrapper cannot receive MIDI 2.0 note events — see that file's header.
 add_subdirectory(dpf)
 # dgl-opengl is normally created by dpf_add_plugin()'s UI_TYPE branch; call the same helper
-# directly. SHARED_RESOURCES=TRUE embeds DGL's DejaVu font (fontFace(NANOVG_DEJAVU_SANS_TTF)).
-dpf__add_dgl_opengl(TRUE FALSE FALSE)
+# directly. SHARED_RESOURCES=TRUE embeds DGL's DejaVu font (fontFace(NANOVG_DEJAVU_SANS_TTF));
+# USE_FILE_BROWSER=TRUE builds the file dialog Save / Load open (DISTRHO_UI_FILE_BROWSER).
+dpf__add_dgl_opengl(TRUE TRUE FALSE)
 # StruckRoom's own namespace (UmpireDAW's docs/decisions.md, "DPF fork"): on macOS pugl names its
 # Objective-C classes after it, so two DPF binaries with the same one in a host collide.
 target_compile_definitions(dgl-opengl PUBLIC DGL_NAMESPACE=StruckRoomDGL)
@@ -411,6 +413,15 @@ add_test(NAME ss-room COMMAND ss-room-test)
 set_tests_properties(ss-room PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 add_test(NAME ss-bend COMMAND ss-bend-test)
 set_tests_properties(ss-bend PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
+
+# The UI's Save / Load file format, without the UI.
+add_executable(ss-presetfile-test test/ss_presetfile_test.cpp)
+target_include_directories(ss-presetfile-test PRIVATE plugin src/UI)
+set_target_properties(ss-presetfile-test PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+
+add_test(NAME ss-presetfile COMMAND ss-presetfile-test "${CMAKE_SOURCE_DIR}/Presets"
+                                    "${CMAKE_BINARY_DIR}/presetfile-test")
+set_tests_properties(ss-presetfile PROPERTIES PASS_REGULAR_EXPRESSION "ALL PASS")
 
 # --- end-to-end CLAP host test: note-port dialect negotiation + the MIDI 2.0 7.9-pitch path ------
 # Drives the real built .clap over the CLAP C API (no DAW, no GUI): dlopen + clap_entry + factory,

@@ -35,6 +35,7 @@
 
 #define DISTRHO_UI_USE_NANOVG          1   // knobs/labels drawn with NanoVG vector primitives
 #define DISTRHO_UI_USER_RESIZABLE      1
+#define DISTRHO_UI_FILE_BROWSER        1   // Save / Load's file dialog (UI::openFileBrowser)
 #define DISTRHO_UI_DEFAULT_WIDTH       1080
 #define DISTRHO_UI_DEFAULT_HEIGHT      640   // 2 cols × 3 rows (spectrum takes the top-left cell)
 

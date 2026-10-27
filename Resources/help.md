@@ -44,7 +44,7 @@ The host saves every parameter with its project.
 ~~~note [card]
 (#panel)
 ## The Panel
-**The header:** the Unlikelyware logo (a click opens unlikelyware.com), the title, and the **Preset** menu.
+**The header:** the Unlikelyware logo (a click opens unlikelyware.com), the title, **Save** and **Load** (see [Presets](#presets)), **Help**, and the **Preset** menu.
 
 **Below it, three rows:**
 - **Top:** the [spectrum](#spectrum), and the **Strike** panel.
@@ -229,7 +229,12 @@ The **Preset** menu at the top right holds the factory presets, in alphabetical 
 
 - **Choosing a preset sets every sound parameter**, Voices and the Expression knobs included. It leaves the **MPE** switch alone.
 - The menu shows **--** until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.
-- There's no way to save your own presets in StruckRoom: the host saves the patch with its project, and most hosts can save a plugin's state as their own preset.
+
+**Your own patches:** **Save** and **Load**, left of Help, write the patch to a file and read one back, through the system's file dialog. The first time, the dialog opens on **Documents/StruckRoom**; after that, on the last folder you used.
+- A saved patch has every sound parameter, like a factory preset, and leaves out **MPE**. Loading one sets those parameters and leaves MPE alone.
+- The menu then shows the patch's name, dimmed, in place of a factory preset's.
+- The file is the same JSON as the factory presets, so a patch you save can be put in the source's `Presets` folder to build it in as a factory preset.
+- The host still saves the patch with its project, whether or not you saved it to a file.
 ~~~
 ~~~note [card]
 (#tips)
