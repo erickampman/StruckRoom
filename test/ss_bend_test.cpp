@@ -950,6 +950,49 @@ void testChannelModeMessages() {
    }
 }
 
+// --- a strike's first block -------------------------------------------------------------------------
+// Two bugs made a strike's first block wrong. The bank read its pitch at the block's first sample, where
+// the Slew has barely left the voice's previous pitch, so the whole first block rang at the old note and
+// retuned a block later. And Final's level smoother started each voice at 1, not at Level, so a voice's
+// first note was 1/Level louder for ~20 ms. Both fixed as in StruckGaussian (820d116).
+void testFirstBlock() {
+   std::printf("A strike's first block:\n");
+   auto peakOf = [](const std::vector<float>& s) {
+      float p = 0.0f;
+      for (float v : s) p = std::max(p, std::fabs(v));
+      return p;
+   };
+   // Zero-crossing frequency over the first n samples.
+   auto earlyHz = [](const std::vector<float>& s, size_t n) {
+      double first = -1.0, last = -1.0;
+      int crossings = 0;
+      for (size_t i = 1; i < n; ++i)
+         if (s[i - 1] < 0.0f && s[i] >= 0.0f) {
+            const double t = double(i - 1) + double(-s[i - 1]) / double(s[i] - s[i - 1]);
+            if (first < 0.0) first = t; else ++crossings;
+            last = t;
+         }
+      return crossings > 0 ? crossings * kSampleRate / (last - first) : 0.0;
+   };
+   VoiceManager vm(kSampleRate, kBlock);
+   configure(vm, true);                        // mono: one voice, so every note reuses it
+   setBank(vm, ModalBankParamItemDecayT60, 0.3f);
+   std::vector<std::vector<float>> hits;
+   for (const int note : { 60, 60, 72 }) {
+      vm.handleMIDIMessage(pm::fromMidi1Bytes(0x90, uint8_t(note), 100));
+      hits.push_back(render(vm, kBlock));
+      vm.handleMIDIMessage(pm::fromMidi1Bytes(0x80, uint8_t(note), 0));
+      render(vm, uint32_t(2.0 * kSampleRate));   // ring out
+   }
+   const float p0 = peakOf(hits[0]), p1 = peakOf(hits[1]);
+   check(std::fabs(p0 / p1 - 1.0f) < 0.01f, "a voice's first strike is as loud as its second (" + num(p0) + " vs " + num(p1) + ")");
+   // The block's second half: the room's direct path takes ~150 samples to settle on any note, which
+   // throws the zero-crossing count off before then. Without the fix this check fails too.
+   const std::vector<float> late(hits[2].begin() + kBlock / 2, hits[2].end());
+   const double hz = earlyHz(late, late.size()), c5 = pm::noteToFrequency(72);
+   check(std::fabs(hz / c5 - 1.0) < 0.01, "C5 after C4 rings at C5 within its first block (" + num(hz) + " Hz)");
+}
+
 // Note-offs the engine generates itself (sustain pedal, all-notes-off, panic) must carry the
 // note's channel, or they never match the note they are meant to release.
 void testGeneratedNoteOffsMatchChannel() {
@@ -1006,6 +1049,7 @@ int main() {
    testChannelModeMessages();
    testReleasedNotes();
    testExpression();
+   testFirstBlock();
    testGeneratedNoteOffsMatchChannel();
    if (g_fails == 0) std::printf("ALL PASS\n");
    else std::printf("%d FAILED\n", g_fails);
