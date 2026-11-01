@@ -38,8 +38,8 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
       collect the dialog's result. The GUI now runs its own main-run-loop timer when the host has none, started at
       set_parent; the home folder comes from the account, not the sandboxed $HOME; failures show in the Preset menu
       (StruckGaussian 3f0c97c)
-- [ ] By hand: Save and Load in Logic Pro (AUv2) and a CLAP host on macOS; Windows and Linux (the dialog is native on
-      Windows, DPF's own on Linux)
+- [x] By hand on Linux (2026-11-01): Save and Load (DPF's own dialog)
+- [ ] By hand: Save and Load in Logic Pro (AUv2) and a CLAP host on macOS
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
