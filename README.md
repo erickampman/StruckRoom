@@ -178,8 +178,9 @@ An expression may name only a note id: tuning then looks up that note's key.
 down to silence, is stolen, or (mono) the note leaves the held stack. Hosts such as Bitwig keep a
 note's per-voice modulation and expressions running until then. Notes that arrive as MIDI events get
 no note end, since a CLAP note end answers a CLAP note-on. The voice-info extension reports the voice
-count (10, or 1 in Mono) and that notes may overlap on the same key, since note ids keep them apart. VST3 note expression
-(PlainOldSynth's clap-wrapper extension) does not apply: StruckRoom has no VST3 build.
+count (10, or 1 in Mono) and that notes may overlap on the same key, since note ids keep them apart. In the VST3 build,
+clap-wrapper's VST3 extension (`CLAP_PLUGIN_AS_VST3`, as in PlainOldSynth) offers the Tuning, Pressure
+and Brightness note expressions, which the wrapper delivers as CLAP note expressions.
 
 The [DISTRHO Plugin Framework (DPF)](https://github.com/DISTRHO/DPF) is used **only as the GUI
 layer** (UIExporter + NanoVG + pugl). The CLAP entry point is hand-written in `src/plugin.cpp`,

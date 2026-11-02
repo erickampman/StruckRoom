@@ -6,7 +6,7 @@
 </div>
 
 <p>
-  <em>StruckRoom is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em>
+  <em>StruckRoom is a CLAP and VST3 instrument on macOS and Linux, and an AUv2 instrument on macOS. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em>
 </p>
 
 ::: {.callout .callout-note .card}
@@ -19,7 +19,7 @@
 
 **The Walls tab —** [The Walls](#walls) · [Wall Effects](#wall-effects) · [The Room Decay Plot](#room-decay)
 
-**Playing —** [Voices and MIDI](#voices-midi) · [Presets](#presets) · [Tips](#tips) · [Troubleshooting](#troubleshooting)
+**Playing —** [Voices and MIDI](#voices-midi) · [Formats and microtonal tuning](#formats) · [Presets](#presets) · [Tips](#tips) · [Troubleshooting](#troubleshooting)
 :::
 
 ::: {.callout .callout-note .card}
@@ -37,7 +37,7 @@ Each note goes through four stages:
 
 ::: {.callout .callout-note .card}
 ## Getting Started {#getting-started}
-1. **Load StruckRoom** on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).
+1. **Load StruckRoom** on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP, VST3 or AU host). For microtonal playing, use the CLAP version if your host has it: see [Formats and microtonal tuning](#formats)..
 2. **Play.** The default patch (the same as the **Init** preset) is a free-free metal bar with a 2-second decay, in a room 3 × 2.2 wavelengths of the note.
 3. **Pick a preset** from the **Preset** menu at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.
 4. **Change the object** with **Material** in the Object panel (on the **Object** tab), and watch the spectrum at the top left redraw.
@@ -276,7 +276,7 @@ Absorption and **Bright** pull the dots down, and **Air** caps them. A dense roo
 
 **Sustain pedal** (CC 64) holds released notes in the Poly modes. Since a struck note rings on anyway, the pedal mostly matters for what still controls the note: see *Released notes* below.
 
-**MIDI 2.0 first.** StruckRoom prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; **Vel>Level** decides how loud it is.
+**MIDI 2.0 first.** In the CLAP version, StruckRoom prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; **Vel>Level** decides how loud it is.
 
 **A note is note number + channel + group.** The same key on two channels is two independent notes.
 :::
@@ -319,7 +319,7 @@ With MPE off, an ordinary pitch wheel still bends released notes. MIDI 2.0 per-n
 
 </details>
 
-<details class="disclosure">
+<details class="disclosure" id="clap-expressions">
 <summary class="disclosure-title subtle">CLAP note expressions and note end</summary>
 
 ::: disclosure-content
@@ -329,6 +329,26 @@ Hosts such as Bitwig send per-note expression as CLAP note expressions:
 - Volume, Pan, Vibrato and Expression (the CLAP expression of that name) are ignored.
 
 For a note the host sends as a CLAP note, StruckRoom reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.
+:::
+
+</details>
+
+<details class="disclosure" id="formats">
+<summary class="disclosure-title subtle">Formats and microtonal tuning</summary>
+
+::: disclosure-content
+The VST3 and AUv2 versions are the CLAP version inside a wrapper, so they sound the same. What differs is what reaches them from the host, and that matters most for microtonal scales.
+
+**CLAP** passes MIDI 2.0 through as it is. A note can carry its exact pitch (Pitch 7.9), a key can be retuned (Pitch 7.25), and per-note pitch bend reaches just its note, all at full resolution and timed to the sample. This is the version to use for microtonal tuning.
+
+**VST3 is problematic for microtonal scales**, because of how the format itself carries notes and controllers:
+- **A note is a whole key number.** VST3 has no MIDI 2.0, so Pitch 7.9, Pitch 7.25 and MIDI 2.0 per-note pitch bend never arrive. A tuning can only come as a note's *tuning* offset in cents, or as a **Tuning** note expression, and only if the host sends them. Most hosts don't: they send the plain key, and the note plays in 12-tone equal temperament.
+- **Pitch bend and controllers are not MIDI events.** VST3 turns them into parameter changes, and the wrapper turns those back into MIDI 1.0. They come through at MIDI 1.0 resolution, and as one value per channel per audio block, so a bend or a CC moving within a block arrives late, and only its last value counts.
+- **Retuning by pitch bend is unreliable.** Microtonal tools that tune each note by putting it on its own channel and bending that channel (MPE, or "multichannel" tuning) depend on the bend arriving before its note. As a parameter change it is not ordered against the note-on, so a note can start at the old bend and slide. Setting a channel's bend range with RPN 0 is spread over several controllers, which can arrive merged or out of order in the same block.
+
+With a host that sends VST3 Tuning note expressions (or note-on tuning), StruckRoom plays them exactly, as it does CLAP's Tuning ([CLAP note expressions](#clap-expressions)). Pressure and Brightness note expressions work in VST3 too.
+
+**AUv2** receives MIDI 1.0 as events, in order and timed to the sample, so pitch bend, RPN 0 and MPE work as they do in MIDI 1.0. It has no MIDI 2.0 and no per-note expression, so microtonal tuning is limited to bend-based methods at MIDI 1.0 resolution.
 :::
 
 </details>
