@@ -74,6 +74,27 @@ clap-wrapper goes in `patches/` as a patch file, which `fetch_deps.sh` applies, 
 showing a local change is expected. DPF and pugl are Unlikelyware's forks; changes go to those repos
 first and come here as a new pin.
 
+## Third-party code and licenses
+
+StruckRoom is MIT licensed, and contributions are taken under the same license: a pull request is
+offered as MIT.
+
+- **What ships.** [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) lists every third-party
+  component in the builds, with its version, license and full license text, and every binary
+  package includes it. A change that adds a component, or moves one to a new version, updates its
+  entry in the same commit.
+- **Upstream code stays as it came.** Submodules aren't edited in place: a fix goes upstream, to
+  Unlikelyware's DPF or pugl fork, or into a patch file that `tools/fetch_deps.sh` applies.
+  Copied-in files keep their copyright and license headers. The PolygraphModular engine in `src/` is Unlikelyware's own, MIT like the rest.
+- **A new dependency** must allow MIT-licensed source and binary distribution with nothing more
+  than keeping its notice: MIT, BSD, ISC, zlib, Apache-2.0 (with its NOTICE file, if it has one) or
+  public domain, and the SIL Open Font License for fonts. No GPL or LGPL code.
+- **Trademarks.** VST® is a registered trademark of Steinberg: the first "VST" in any document
+  carries the ®, and a document that names VST ends with Steinberg's attribution line. Showing the
+  VST Compatible Logo brings in the rest of [Steinberg's VST Usage Guidelines](https://github.com/steinbergmedia/vst3sdk/blob/master/VST3_Usage_Guidelines.pdf). Name
+  hosts and other products plainly, to say what works with what, never so it reads as an
+  endorsement.
+
 ## Drawing (NanoVG)
 
 NanoVG fills non-convex paths through the stencil buffer and assumes it starts at zero, but DPF clears
@@ -144,3 +165,5 @@ Vendored PolygraphModular files keep their original `#include "X.hpp"` form; eve
 folder is on the include path so they resolve across `Common/` `Module/` `Voice/`. The plugin
 links the `pm_framework` static lib; DPF's `UIExporter` hosts the editor inside the CLAP gui
 extension.
+
+VST is a registered trademark of Steinberg Media Technologies GmbH.

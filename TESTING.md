@@ -19,7 +19,7 @@ clap-validator validate build/StruckRoom.clap
 ninja -C build install-auv2 && auval -v aumu StRm nLKL      # macOS: AU VALIDATION SUCCEEDED
 ```
 
-Steinberg's VST3 validator builds from `external/vst3sdk` (`ninja validator` in a separate build of
+Steinberg's VST® 3 validator builds from `external/vst3sdk` (`ninja validator` in a separate build of
 that folder with `-DSMTG_ENABLE_VSTGUI_SUPPORT=OFF`); its CMake rejects an Xcode path with spaces, so
 point `DEVELOPER_DIR` at a symlink without them. Then `validator build/StruckRoom.vst3`.
 
@@ -70,3 +70,5 @@ clap-validator validate build/StruckRoom.clap
 
 `.github/workflows/ci.yml` runs the configure + build + `ctest` on every push across
 Linux (gcc/clang) and macOS (clang) with `-DSTRUCKROOM_WERROR=ON`.
+
+VST is a registered trademark of Steinberg Media Technologies GmbH.

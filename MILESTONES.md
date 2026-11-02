@@ -7,11 +7,11 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] Room core + RoomModule per voice: direct, 4 reflections, 4 wall resonators, room modes, M/S pair
 - [x] 29 host parameters (room, placement, mix, two wall pairs), presets, Poly 4 default, Width = M/S side
 - [x] ss-room fuzz test; ctest 13/13; clap-validator 35 pass, 0 fail
-- [ ] By hand: play it in a host and decide which controls matter
+- [x] By hand: play it in a host and decide which controls matter (2026-10-25; the wall effects came out of it)
 - [x] Editor tabs: Object / Room (draggable map) / Walls (decay plot)
 - [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
-- [ ] Rename leftovers: help page still describes StruckSynth
-- [ ] Help page: what costs CPU and how to manage it (ReleaseUMP R2-11, which has the numbers)
+- [x] Rename leftovers: the help page describes the room, its tabs and the wall effects
+- [x] Help page: what costs CPU and how to manage it (Detail and voices, with measured numbers)
 - [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
 - [x] Listened to exp5 (2026-10-25): all four go in, one knob each
 - [x] Wall effects in the plugin: Shift, Flex, Rattle, Gap (Rattle's) per wall pair (8 params, appended),
@@ -31,7 +31,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 ## Save and Load (2026-10-27)
 - [x] Save / Load in the header write the patch as the factory presets' JSON and read it back (src/UI/PresetFile.hpp),
       through DPF's file dialog; MPE left out, loaded values clamped to each param's range.
-      Ported from StruckGaussian (ReleaseUMP R2-15). Fixed on the way:
+      Ported from StruckGaussian. Fixed on the way:
       the dumper wrote no Room, Placement, Mix, SideWalls or FrontBackWalls section, so dumped patches lost the room.
       ss-presetfile checks the round trip, every factory preset, and non-presets
 - [x] AUv2: clap-wrapper gives no timers and (unpatched) never calls gui show(), so the UI's idle never ran and DPF would never
@@ -39,7 +39,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
       set_parent; the home folder comes from the account, not the sandboxed $HOME; failures show in the Preset menu
       (StruckGaussian 3f0c97c)
 - [x] By hand on Linux (2026-11-01): Save and Load (DPF's own dialog)
-- [ ] By hand: Save and Load in Logic Pro (AUv2) and a CLAP host on macOS
+- [x] By hand on the Mac (2026-11-01): Save and Load in Logic Pro (AUv2) and StageHand (CLAP)
 
 ## Tests
 - all: cmake --build build -j && ctest --test-dir build --output-on-failure
@@ -68,7 +68,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] clap-wrapper AUv2 GUI patch carried in `patches/` (calls `gui->show()`, which starts the render timer)
 - [x] Validated on macOS (Xcode 26.3, Ninja, 2026-10-21): ctest 12/12; clap-validator 35 pass, 0 fail;
       auval passes; Steinberg's VST3 validator 47 pass, 0 fail (lists Tuning + Brightness)
-- [ ] By hand: GUI, notes, automation and state recall in Logic (AUv2), REAPER (VST3 + AUv2), Bitwig (VST3);
+- [ ] By hand: GUI, notes, automation and state recall in Logic (AUv2), REAPER (VST3 + AUv2), Bitwig (VST3) (Logic done 2026-11-01);
       Bitwig per-note Tuning in the VST3
 - [ ] Linux: VST3 build in CI; not yet loaded in a Linux host
 

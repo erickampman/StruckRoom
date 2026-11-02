@@ -41,7 +41,7 @@ tools/fetch_deps.sh
 clap-wrapper patch in `patches/`. Run it again after a `git pull` that moves, adds or re-points a
 submodule: a plain pull leaves them where they were.
 
-Of the VST3 SDK's nested submodules it takes only the four the build needs (a plain
+Of the VST® 3 SDK's nested submodules it takes only the four the build needs (a plain
 `--recurse-submodules` also pulls its docs, tutorials and VSTGUI). The patch makes the AUv2 editor
 draw: clap-wrapper's AUv2 view never calls `gui->show()`, which is where the editor starts its
 render timer.
@@ -133,3 +133,5 @@ same package list, the same `build/` folder, the same option names (`<PROJECT>_B
 
 - One of the seven synths (PlainOldSynth, StruckSynth, StruckRoom, StruckGaussian, StruckKit, IFSynth, ModicumFM), which share the PolygraphModular framework, vendored, and DPF for the UI. `tools/fetch_deps.sh` also applies `patches/` to clap-wrapper (its AUv2 view), so `external/clap-wrapper` shows a local change: that is the patch, not uncommitted work.
 - Nothing else.
+
+VST is a registered trademark of Steinberg Media Technologies GmbH.
