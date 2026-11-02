@@ -13,19 +13,24 @@
 ## On This Page
 [Overview](#overview) · [Getting Started](#getting-started) · [The Panel](#panel)
 
-**The controls —** [The Spectrum](#spectrum) · [Strike](#strike) · [Object](#object) · [Decay](#decay) · [Global](#global) · [Timbre](#timbre) · [Expression](#expression)
+**The Object tab —** [The Spectrum](#spectrum) · [Strike](#strike) · [Object](#object) · [Decay](#decay) · [Global](#global) · [Timbre](#timbre) · [Expression](#expression)
+
+**The Room tab —** [The Room Map](#room-map) · [Room](#room) · [Placement](#placement) · [Mix](#mix)
+
+**The Walls tab —** [The Walls](#walls) · [Wall Effects](#wall-effects) · [The Room Decay Plot](#room-decay)
 
 **Playing —** [Voices and MIDI](#voices-midi) · [Presets](#presets) · [Tips](#tips) · [Troubleshooting](#troubleshooting)
 :::
 
 ::: {.callout .callout-note .card}
 ## Overview {#overview}
-StruckRoom is a **modal-synthesis instrument**: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.
+StruckRoom is a **modal-synthesis instrument in a room**: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter, and it puts that object in a room that **scales with the note**. Every length in the room is measured in wavelengths of the note being played, so the object, the walls, where the object sits and the standing waves all transpose together. It sits somewhere between a struck instrument and a reverb.
 
-Each note goes through three stages:
+Each note goes through four stages:
 1. **Strike** makes a short excitation burst: a smooth mallet bump or a burst of noise, from a single sample long (the hardest, brightest hit) to about 20 ms or 1.6 periods of the note (the softest).
 2. **ModalBank** is a bank of up to 64 tuned resonators, one per vibrational **mode** of the object. The burst sets them ringing. Which frequencies they ring at comes from the **Material**; how long each one rings comes from **Decay** and **Damp**.
-3. **Final** sends the bank's stereo output to the host.
+3. **Room** is a two-dimensional room with two pairs of walls (side walls and front/back), heard from one point by a Mid/Side microphone pair. It adds the object's **direct** sound, four **first reflections** (one off each wall), the walls' own **ringing** if you let them ring, and the room's **standing waves** (its modes), which decay as the walls absorb. Each voice has a room of its own.
+4. **Final** sends the room's stereo output to the host.
 
 **There is no amplitude envelope.** The resonators' own decay is the envelope, so a note rings on after you let go of the key, for as long as the decay says, and the voice frees itself once it has rung down to silence. Note-off doesn't stop a ringing note; it only ends your control of it.
 :::
@@ -33,25 +38,31 @@ Each note goes through three stages:
 ::: {.callout .callout-note .card}
 ## Getting Started {#getting-started}
 1. **Load StruckRoom** on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).
-2. **Play.** The default patch (the same as the **Init** preset) is a free-free metal bar with a 2-second decay.
+2. **Play.** The default patch (the same as the **Init** preset) is a free-free metal bar with a 2-second decay, in a room 3 × 2.2 wavelengths of the note.
 3. **Pick a preset** from the **Preset** menu at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.
-4. **Change the object** with **Material** in the Object panel, and watch the spectrum at the top left redraw.
+4. **Change the object** with **Material** in the Object panel (on the **Object** tab), and watch the spectrum at the top left redraw.
 5. **Change how long it rings** with **Decay**, and how quickly its upper modes die away with **Damp**.
 6. **Change the mallet** with **Hardness** in the Strike panel: lower is harder and brighter.
+7. **Change the room** on the **Room** tab: drag the object and the listener around the map, and balance the object's own sound against the room's with **Direct**, **Early** and **Late**.
+8. **Change the walls** on the **Walls** tab: how much they absorb, and whether they ring.
 
 The host saves every parameter with its project.
 :::
 
 ::: {.callout .callout-note .card}
 ## The Panel {#panel}
-**The header:** the Unlikelyware logo (a click opens unlikelyware.com), the title, **Save** and **Load** (see [Presets](#presets)), **Help**, and the **Preset** menu.
+**The header:** the Unlikelyware logo (a click opens unlikelyware.com), the title, the three tabs **Object**, **Room** and **Walls** in the middle, then **Save** and **Load** (see [Presets](#presets)), **Help**, and the **Preset** menu. Click a tab to show its panels; the header stays the same on all three.
 
-**Below it, three rows:**
+**The Object tab** (the struck object), in three rows:
 - **Top:** the [spectrum](#spectrum), and the **Strike** panel.
 - **Middle:** **Object** and **Decay**.
 - **Bottom:** **Global**, **Timbre** and **Expression**.
 
-Each panel has its own colour: steel for Global, amber for Strike, green for Object, violet for Decay, copper for Timbre and teal for Expression. Each knob shows its name above it and its value below.
+**The Room tab:** the [room map](#room-map) on the left, at full height; on the right, one above the other, the **Room**, **Placement** and **Mix** panels.
+
+**The Walls tab:** the **Side walls** and **Front / back walls** panels side by side, each three rows of four controls, over the [room decay plot](#room-decay) across the bottom.
+
+Each panel has its own colour: steel for Global, amber for Strike, green for Object, violet for Decay, copper for Timbre and teal for Expression; blue for Room, sand for Placement and rose for Mix; coral for the side walls and mint for the front and back walls. Each knob shows its name above it and its value below.
 
 **Resizing:** drag the host window's corner. The panel keeps its shape (1080 × 640) and scales everything in it; the smallest size is 864 × 512.
 :::
@@ -67,15 +78,16 @@ Each panel has its own colour: steel for Global, amber for Strike, green for Obj
 | Scroll wheel | One step is 5% of the range; with Control, 0.5% |
 | Shift-click | Back to the default value |
 | Click a menu | Opens its list; click a choice, or click elsewhere to close it |
+| Drag the object or listener on the room map | Moves it (see [The Room Map](#room-map)) |
 
-Knobs with a time (Glide, Decay) work on a logarithmic scale, so the short end gets as much travel as the long end. Times under a second read in ms, longer ones in s.
+Knobs with a time (Glide, Decay, Air, and the walls' Decay) work on a logarithmic scale, so the short end gets as much travel as the long end; so do Room W, Room D, Detail and the walls' Ratio. Times under a second read in ms, longer ones in s.
 :::
 
 </details>
 
 ::: {.callout .callout-note .card}
 ## The Spectrum {#spectrum}
-The display at the top left draws the current object's modes as bars:
+The display at the top left of the Object tab draws the current object's modes as bars:
 - **Across:** each mode's frequency, on a logarithmic scale, so octaves are equal widths.
 - **Height:** how long that mode rings, relative to the longest. A taller, more opaque bar outlasts a shorter, fainter one.
 
@@ -160,10 +172,10 @@ The Bell knobs do nothing while Bell Amt is 0. The spectrum shows their effect a
 
 ::: {.callout .callout-note .card}
 ## Global {#global}
-- **Voices** (Mono / Poly 10 / Poly 20 / Poly 32, default Poly 10): how many notes can sound at once. See [Voices and MIDI](#voices-midi).
+- **Voices** (Mono / Poly 4 / Poly 10 / Poly 20 / Poly 32, default Poly 4): how many notes can sound at once. Every voice has a room of its own, so voices cost a lot of CPU. See [Voices and MIDI](#voices-midi).
 - **Glide** (0.1 ms to 2 s, default 10 ms): the time to slide from one note's pitch to the next. **Only in Mono**; in the Poly modes each note starts on its own pitch.
 - **Level** (0–2, default 0.50): the output level, as a gain.
-- **Spread** (0–1, default 0.30): spreads the modes across the stereo field, lowest on the left to highest on the right. **0** puts them all in the centre.
+- **Width** (0–1, default 1.00): the listener's stereo width, the level of the side signal in its Mid/Side pair. **0** is mono; at **1**, sound arriving from the left wall lands on the left. A centred source keeps its level at any width.
 - **MPE** (Off / On, default Off): treats the input as an MPE controller (a lower zone). See [Voices and MIDI](#voices-midi). Presets don't change it: it describes your controller, not the sound.
 :::
 
@@ -185,8 +197,82 @@ What a controller's **pressure** and **timbre** do to a note. Each knob is 0 by 
 :::
 
 ::: {.callout .callout-note .card}
+## The Room Map {#room-map}
+The Room tab's left half shows the room from above, at its width-to-depth shape, with a grid one wavelength apart. The side walls are its left and right edges, the front and back walls its bottom and top. A wall is drawn heavier the more it absorbs, and glows when it rings.
+- **The object** is the green dot; **the listener** is the white one, with the two lobes of its figure-8 microphone pointing at the side walls. A faint line between them is the direct path.
+- **Drag either one** to move it. The map *is* the **Src X/Y** and **Mic X/Y** knobs in the [Placement](#placement) panel: dragging moves them, and the host records it as automation.
+- Left on the map is the left channel; Y runs from the front wall at the bottom to the back wall at the top.
+- The room's size, in wavelengths, is written along the bottom.
+:::
+
+::: {.callout .callout-note .card}
+## Room {#room}
+The room's size, and how it follows the note.
+- **Room W** (0.25–16 wl, default 3.00) and **Room D** (0.25–16 wl, default 2.20): the room's width and depth, in wavelengths of the note (of middle C, note 60, when Room Track is below 1).
+- **Room Track** (0–1, default 1.00): at **1** the room scales with the note, so every note sits in the same room relative to its pitch. At **0** it is a fixed physical room, sized at middle C, so higher notes fit more wavelengths in it.
+- **Decay Track** (0–1, default 0.00): at **1** every decay time (the object's, the walls' and the air's) scales with the note's period, so the whole scene transposes like tape speed: high notes ring shorter, low notes longer. At **0** decay times stay in seconds.
+- **Air** (0.5–30 s, default 12.0 s): the decay time of the air, which keeps a room with perfectly reflective walls from ringing for ever. In seconds at middle C.
+- **Detail** (2–64 × f0, default 12.00): the room's standing waves are modelled up to this multiple of the note's frequency. Higher is more realistic and costs more CPU (see [Tips](#tips)). In a large room at high Detail the limit is lowered to keep it to about 15,500 modes.
+
+The room is tuned at each strike and then left alone: pitch bend and glide move the object, not the room.
+:::
+
+::: {.callout .callout-note .card}
+## Placement {#placement}
+Where the object and the listener stand, as fractions of the room (0 to 1). The same as dragging them on the [room map](#room-map).
+- **Src X** (default 0.31) and **Src Y** (default 0.37): the object.
+- **Mic X** (default 0.62) and **Mic Y** (default 0.71): the listener.
+
+Placement decides which standing waves are driven and heard: a mode is silent where the object or the listener sits on its node, as **Strike Pos** does for the object's own modes. The overall level is kept steady as they move, while the balance of direct sound, reflections and room changes with the distance between them, as it would in a real room.
+:::
+
+::: {.callout .callout-note .card}
+## Mix {#mix}
+- **Direct** (0–2, default 1.00): the object's own sound, delayed by the distance from the object to the listener.
+- **Early** (0–2, default 1.00): the four first reflections, one off each wall, filtered by that wall's absorption. (The walls' ringing has its own level: **Ring**, on the [Walls](#walls) tab.)
+- **Late** (0–2, default 1.00): the standing waves, the room's modes.
+
+Direct 1, Early 0 and Late 0 is the object alone, with no room.
+:::
+
+::: {.callout .callout-note .card}
+## The Walls {#walls}
+The **Side walls** panel sets the left and right walls together, the **Front / back walls** panel the front and back. They have the same twelve controls, captioned **Side …** and **F/B …**; the first eight are below, the last four under [Wall Effects](#wall-effects).
+- **Absorb** (0–1, default 0.15): how much of the sound the walls absorb at each reflection. More absorption makes the reflections quieter and the room's modes die faster.
+- **Bright** (0–8 oct, default 5.00): where the walls start to absorb the high frequencies, in octaves above the note. Lower is a duller wall; **8** is nearly flat. Like Absorb, it filters the reflections and shortens the high modes.
+- **Ring** (0–2, default 0): the walls as resonators of their own, struck where the sound meets them. **0** is a wall that doesn't ring.
+- **Mat** (26 choices, default Membrane): the ringing wall's material, from the same list as the object's (see *The materials* under [Object](#object)).
+- **Ratio** (0.0625–4, default 0.50): the wall's fundamental, relative to the note.
+- **Decay** (50 ms to 20 s, default 1.50 s): how long the wall rings (its T60).
+- **Damp** (0–3, default 1.00): how much faster the wall's upper modes die, as the object's **Damp**.
+- **Link** (Off / On, default Off): **On** rings the wall with the energy it absorbed, rather than the full sound that reached it.
+
+Ring, Mat, Ratio, Decay and Damp do nothing while Ring is 0.
+:::
+
+::: {.callout .callout-note .card}
+## Wall Effects {#wall-effects}
+The last row of each walls panel.
+- **Shift** (0–10 %, default 0): shifts the frequency of the reflections and the wall's ring, by this share of the note's frequency. The near wall shifts up and the far wall down, so the two sides drift against each other: small values beat slowly; 10% clangs.
+- **Flex** (0–1, default 0): the wall gives under the sound, so its reflection's path, and its pitch, bend with the level: soft notes barely, loud ones more.
+- **Rattle** (0–1, default 0): the wall resonator buzzes once it rings past the gap, and stops as the ring decays inside it. It needs **Ring** above 0.
+- **Gap** (0.02–0.95, default 0.15): that gap, as a share of a full-velocity ring. Lower and soft notes rattle too; higher and only the loudest hits do.
+:::
+
+::: {.callout .callout-note .card}
+## The Room Decay Plot {#room-decay}
+The plot across the bottom of the Walls tab shows every one of the room's modes as a dot, for a note at middle C (C4):
+- **Across:** the mode's frequency, on a logarithmic scale, from a quarter of the note up to the **Detail** limit, with lines at the note (f0) and its octaves.
+- **Up:** how long that mode rings, from 0 at the bottom to the longest, whose time is written at the top of the axis.
+- **Colour:** which pair of walls the mode mostly reflects from, coral for the side walls and mint for the front and back, so you can see each pair's share.
+- **Triangles** along the bottom mark each ringing wall pair's fundamental.
+
+Absorption and **Bright** pull the dots down, and **Air** caps them. A dense room is thinned to a few thousand dots. It holds no controls.
+:::
+
+::: {.callout .callout-note .card}
 ## Voices and MIDI {#voices-midi}
-**Voices.** In the Poly modes each note gets its own voice, up to 10, 20 or 32; past that, a sounding voice is taken for the new note. Because notes ring after note-off, a fast passage with a long Decay can use many voices: choose Poly 20 or 32 for that. **Mono** plays one voice: a new note while another is held strikes the same resonators again and glides them to the new pitch (see **Glide**), so the old note's ring carries into the new one. Letting go of the new note goes back to the note still held.
+**Voices.** In the Poly modes each note gets its own voice, up to 4, 10, 20 or 32; past that, a sounding voice is taken for the new note. Because notes ring after note-off, a fast passage with a long Decay can use many voices: choose Poly 10, 20 or 32 for that, if your CPU allows (each voice has its own room; see [Tips](#tips)). **Mono** plays one voice: a new note while another is held strikes the same resonators again and glides them to the new pitch (see **Glide**), so the old note's ring carries into the new one. Letting go of the new note goes back to the note still held.
 
 **Sustain pedal** (CC 64) holds released notes in the Poly modes. Since a struck note rings on anyway, the pedal mostly matters for what still controls the note: see *Released notes* below.
 
@@ -203,7 +289,7 @@ What a controller's **pressure** and **timbre** do to a note. Each knob is 0 by 
 - **RPN 0** (pitch bend sensitivity) sets a channel's range.
 - **MIDI 2.0 per-note pitch bend** bends only the note it names, over the same range as its channel's bend. A controller can give per-note bend a range of its own with MIDI 2.0 registered controller 7, as KeyboardEDO does.
 - **Pitch 7.25** (MIDI 2.0 per-note controller 3) sets an absolute pitch for a key, and the bends offset from it. It retunes the sounding note and stays with the key: later notes on that key start at it, unless the note-on carries its own Pitch 7.9 pitch. Per-Note Management Reset clears it.
-- Bends come after **Glide**, so glide never smears a bend, and they bend a ringing tail smoothly rather than re-striking it. Bend changes are smoothed over 2 ms, and a note starts at its bent pitch.
+- Bends come after **Glide**, so glide never smears a bend, and they bend a ringing tail smoothly rather than re-striking it. They bend the object only: the room keeps the tuning it took at the strike. Bend changes are smoothed over 2 ms, and a note starts at its bent pitch.
 - Per-note bend resets on each note-on. One sent before its note-on is ignored.
 :::
 
@@ -269,7 +355,9 @@ The **Preset** menu at the top right holds the factory presets, in alphabetical 
 | Tine EP | Tine, 32 modes | 3 s | A bell bump (+1 oct at 3 oct up) for an electric-piano shimmer |
 | Wood Block | Closed Tube, 12 modes, an octave up | 0.12 s | Very hard strike, heavy damping: a short knock |
 
-- **Choosing a preset sets every sound parameter**, Voices and the Expression knobs included. It leaves the **MPE** switch alone.
+All five use Poly 4 and the default room and walls: 3 × 2.2 wavelengths, walls that absorb 0.15 and don't ring.
+
+- **Choosing a preset sets every sound parameter**, Voices, the Expression knobs, the room and the walls included. It leaves the **MPE** switch alone.
 - The menu shows **--** until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.
 
 **Your own patches:** **Save** and **Load**, left of Help, write the patch to a file and read one back, through the system's file dialog. The first time, the dialog opens on **Documents/StruckRoom**; after that, on the last folder you used.
@@ -288,14 +376,19 @@ The **Preset** menu at the top right holds the factory presets, in alphabetical 
 - **Stretch** above 9 makes a harmonic material stiffer, its upper modes sharp, as in a piano string: try String with Stretch at step 11–13.
 - **Fewer Modes** makes a purer, simpler sound, and costs less CPU.
 - **For an even keyboard**, keep **Contact** on Note-Rel. Wall-Clk makes the bass boomier and the top pingier, as real mallets do.
-- **Long decays need voices.** With a Decay of several seconds, Poly 20 or Poly 32 keeps older notes from being cut off.
+- **Long decays need voices.** With a Decay of several seconds, Poly 10, 20 or 32 keeps older notes from being cut off, at a cost in CPU.
+- **CPU.** Every voice carries its own room, so voices are expensive, and **Detail** is the main cost of each. On an Apple M4 at 48 kHz, a 4-note chord takes about 8% of a core at Detail 12, 24% at Detail 21 and 41% at Detail 32. Lower Detail, or use fewer voices, if the host struggles.
+- **To hear the object alone**, set Early and Late to 0 and Direct to 1.
+- **Bigger rooms** (higher Room W and D) have more, denser modes, and cost more CPU at the same Detail.
 - **For a hand-damped bar on a pressure controller**, set Press>Decay negative: press into a note to stop it.
 :::
 
 ::: {.callout .callout-note .card}
 ## Troubleshooting {#troubleshooting}
 - **Notes keep ringing after I let go.** That's the design: a struck object rings until it dies away. Shorten **Decay**, raise **Damp**, or use a negative **Press>Decay** to damp it by pressure.
-- **Notes cut off in fast passages.** They're running out of voices. Choose Poly 20 or Poly 32, or shorten Decay.
+- **Notes cut off in fast passages.** They're running out of voices: the default is Poly 4. Choose Poly 10, 20 or 32, or shorten Decay.
+- **Too much CPU, or crackles.** Lower **Detail** (the room's main cost), choose fewer voices, or shrink the room.
+- **The wall's Mat, Ratio, Decay, Damp or Rattle do nothing.** That pair's **Ring** is at 0, so the wall doesn't ring.
 - **Glide does nothing.** It only works in **Mono**.
 - **Raising Modes changes nothing.** The material has fewer modes than that (see *The materials* under [Object](#object)).
 - **Strike Pos or Brightness don't change a held note.** They're read at the strike; play the next note.
