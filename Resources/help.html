@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>help-StruckRoom</title>
     <style>
-    :root {
+:root {
   --bg: #0f1115;
   --page: #141823;
   --text: #e6e2d8;
@@ -249,277 +249,741 @@ h1.card, h2.card, h3.card {
 .breadcrumb a:hover { opacity: 1.0; }
 .breadcrumb .crumb-current { opacity: 1.0; }
 
-    </style>
+
+/* Tables (pipe tables from pandoc) */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.95em;
+}
+
+th, td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  border-bottom: 2px solid #bbb;
+  font-weight: 600;
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.025);
+}    </style>
 </head>
 <body>
 <div class="page">
-<p><div style="display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0.5rem;"> <a href="https://www.unlikelyware.com" target="_blank" rel="noopener noreferrer"> <img src="Unlikelyware.png" alt="Unlikelyware" style="width: 56px; height: auto; border-radius: 10px; margin: 0; display: block;"> </a> <h1 style="margin: 0;">StruckRoom</h1> </div></p>
-<p><p> <em>StruckRoom is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em> </p></p>
-<div class="callout callout-note card">
-<div class="callout-content">
+<div style="display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0 0.5rem;">
+  <a href="https://www.unlikelyware.com" target="_blank" rel="noopener noreferrer">
+    <img src="Unlikelyware.png" alt="Unlikelyware" style="width: 56px; height: auto; border-radius: 10px; margin: 0; display: block;">
+  </a>
+  <h1 style="margin: 0;">StruckRoom</h1>
+</div>
+
+<p>
+  <em>StruckRoom is a CLAP instrument for macOS and Linux. Fine adjustment uses the Control key on both: on the Mac that is Control, not Cmd.</em>
+</p>
+
+<section id="on-this-page" class="callout callout-note card">
 <h2>On This Page</h2>
-<p><a href="#overview">Overview</a> · <a href="#getting-started">Getting Started</a> · <a href="#panel">The Panel</a></p>
-<p><strong>The controls —</strong> <a href="#spectrum">The Spectrum</a> · <a href="#strike">Strike</a> · <a href="#object">Object</a> · <a href="#decay">Decay</a> · <a href="#global">Global</a> · <a href="#timbre">Timbre</a> · <a href="#expression">Expression</a></p>
-<p><strong>Playing —</strong> <a href="#voices-midi">Voices and MIDI</a> · <a href="#presets">Presets</a> · <a href="#tips">Tips</a> · <a href="#troubleshooting">Troubleshooting</a></p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="overview">Overview</h2>
-<p>StruckRoom is a <strong>modal-synthesis instrument</strong>: it sounds like a struck object (a bar, a bell, a tine, a block) rather than an oscillator through a filter.</p>
+<p><a href="#overview">Overview</a> · <a href="#getting-started">Getting
+Started</a> · <a href="#panel">The Panel</a></p>
+<p><strong>The controls —</strong> <a href="#spectrum">The Spectrum</a>
+· <a href="#strike">Strike</a> · <a href="#object">Object</a> · <a
+href="#decay">Decay</a> · <a href="#global">Global</a> · <a
+href="#timbre">Timbre</a> · <a href="#expression">Expression</a></p>
+<p><strong>Playing —</strong> <a href="#voices-midi">Voices and MIDI</a>
+· <a href="#presets">Presets</a> · <a href="#tips">Tips</a> · <a
+href="#troubleshooting">Troubleshooting</a></p>
+</section>
+<section id="overview" class="callout callout-note card">
+<h2>Overview</h2>
+<p>StruckRoom is a <strong>modal-synthesis instrument</strong>: it
+sounds like a struck object (a bar, a bell, a tine, a block) rather than
+an oscillator through a filter.</p>
 <p>Each note goes through three stages:</p>
-<ol>
-<li><strong>Strike</strong> makes a short excitation burst: a smooth mallet bump or a burst of noise, from a single sample long (the hardest, brightest hit) to about 20 ms or 1.6 periods of the note (the softest).</li>
-<li><strong>ModalBank</strong> is a bank of up to 64 tuned resonators, one per vibrational <strong>mode</strong> of the object. The burst sets them ringing. Which frequencies they ring at comes from the <strong>Material</strong>; how long each one rings comes from <strong>Decay</strong> and <strong>Damp</strong>.</li>
-<li><strong>Final</strong> sends the bank's stereo output to the host.</li>
+<ol type="1">
+<li><strong>Strike</strong> makes a short excitation burst: a smooth
+mallet bump or a burst of noise, from a single sample long (the hardest,
+brightest hit) to about 20 ms or 1.6 periods of the note (the
+softest).</li>
+<li><strong>ModalBank</strong> is a bank of up to 64 tuned resonators,
+one per vibrational <strong>mode</strong> of the object. The burst sets
+them ringing. Which frequencies they ring at comes from the
+<strong>Material</strong>; how long each one rings comes from
+<strong>Decay</strong> and <strong>Damp</strong>.</li>
+<li><strong>Final</strong> sends the bank's stereo output to the
+host.</li>
 </ol>
-<p><strong>There is no amplitude envelope.</strong> The resonators' own decay is the envelope, so a note rings on after you let go of the key, for as long as the decay says, and the voice frees itself once it has rung down to silence. Note-off doesn't stop a ringing note; it only ends your control of it.</p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="getting-started">Getting Started</h2>
-<ol>
-<li><strong>Load StruckRoom</strong> on an instrument track in your host (REAPER, Bitwig, StageHand, or any CLAP host).</li>
-<li><strong>Play.</strong> The default patch (the same as the <strong>Init</strong> preset) is a free-free metal bar with a 2-second decay.</li>
-<li><strong>Pick a preset</strong> from the <strong>Preset</strong> menu at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.</li>
-<li><strong>Change the object</strong> with <strong>Material</strong> in the Object panel, and watch the spectrum at the top left redraw.</li>
-<li><strong>Change how long it rings</strong> with <strong>Decay</strong>, and how quickly its upper modes die away with <strong>Damp</strong>.</li>
-<li><strong>Change the mallet</strong> with <strong>Hardness</strong> in the Strike panel: lower is harder and brighter.</li>
+<p><strong>There is no amplitude envelope.</strong> The resonators' own
+decay is the envelope, so a note rings on after you let go of the key,
+for as long as the decay says, and the voice frees itself once it has
+rung down to silence. Note-off doesn't stop a ringing note; it only ends
+your control of it.</p>
+</section>
+<section id="getting-started" class="callout callout-note card">
+<h2>Getting Started</h2>
+<ol type="1">
+<li><strong>Load StruckRoom</strong> on an instrument track in your host
+(REAPER, Bitwig, StageHand, or any CLAP host).</li>
+<li><strong>Play.</strong> The default patch (the same as the
+<strong>Init</strong> preset) is a free-free metal bar with a 2-second
+decay.</li>
+<li><strong>Pick a preset</strong> from the <strong>Preset</strong> menu
+at the top right: Glass Bell, Init, Marimba, Tine EP or Wood Block.</li>
+<li><strong>Change the object</strong> with <strong>Material</strong> in
+the Object panel, and watch the spectrum at the top left redraw.</li>
+<li><strong>Change how long it rings</strong> with
+<strong>Decay</strong>, and how quickly its upper modes die away with
+<strong>Damp</strong>.</li>
+<li><strong>Change the mallet</strong> with <strong>Hardness</strong> in
+the Strike panel: lower is harder and brighter.</li>
 </ol>
 <p>The host saves every parameter with its project.</p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="panel">The Panel</h2>
-<p><strong>The header:</strong> the Unlikelyware logo (a click opens unlikelyware.com), the title, <strong>Save</strong> and <strong>Load</strong> (see <a href="#presets">Presets</a>), <strong>Help</strong>, and the <strong>Preset</strong> menu.</p>
+</section>
+<section id="panel" class="callout callout-note card">
+<h2>The Panel</h2>
+<p><strong>The header:</strong> the Unlikelyware logo (a click opens
+unlikelyware.com), the title, <strong>Save</strong> and
+<strong>Load</strong> (see <a href="#presets">Presets</a>),
+<strong>Help</strong>, and the <strong>Preset</strong> menu.</p>
 <p><strong>Below it, three rows:</strong></p>
 <ul>
-<li><strong>Top:</strong> the <a href="#spectrum">spectrum</a>, and the <strong>Strike</strong> panel.</li>
-<li><strong>Middle:</strong> <strong>Object</strong> and <strong>Decay</strong>.</li>
-<li><strong>Bottom:</strong> <strong>Global</strong>, <strong>Timbre</strong> and <strong>Expression</strong>.</li>
+<li><strong>Top:</strong> the <a href="#spectrum">spectrum</a>, and the
+<strong>Strike</strong> panel.</li>
+<li><strong>Middle:</strong> <strong>Object</strong> and
+<strong>Decay</strong>.</li>
+<li><strong>Bottom:</strong> <strong>Global</strong>,
+<strong>Timbre</strong> and <strong>Expression</strong>.</li>
 </ul>
-<p>Each panel has its own colour: steel for Global, amber for Strike, green for Object, violet for Decay, copper for Timbre and teal for Expression. Each knob shows its name above it and its value below.</p>
-<p><strong>Resizing:</strong> drag the host window's corner. The panel keeps its shape (1080 × 640) and scales everything in it; the smallest size is 864 × 512.</p>
-</div>
-</div>
+<p>Each panel has its own colour: steel for Global, amber for Strike,
+green for Object, violet for Decay, copper for Timbre and teal for
+Expression. Each knob shows its name above it and its value below.</p>
+<p><strong>Resizing:</strong> drag the host window's corner. The panel
+keeps its shape (1080 × 640) and scales everything in it; the smallest
+size is 864 × 512.</p>
+</section>
 <details class="disclosure">
 <summary class="disclosure-title subtle">Knobs and menus</summary>
+
 <div class="disclosure-content">
-<p>| Gesture | Result | |---|---| | Drag up or down | Change the value. About 200 points of drag covers the whole range. | | Control-drag | Ten times finer (Control on the Mac too) | | Scroll wheel | One step is 5% of the range; with Control, 0.5% | | Shift-click | Back to the default value | | Click a menu | Opens its list; click a choice, or click elsewhere to close it |</p>
-<p>Knobs with a time (Glide, Decay) work on a logarithmic scale, so the short end gets as much travel as the long end. Times under a second read in ms, longer ones in s.</p>
+<table>
+<thead>
+<tr>
+<th>Gesture</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drag up or down</td>
+<td>Change the value. About 200 points of drag covers the whole
+range.</td>
+</tr>
+<tr>
+<td>Control-drag</td>
+<td>Ten times finer (Control on the Mac too)</td>
+</tr>
+<tr>
+<td>Scroll wheel</td>
+<td>One step is 5% of the range; with Control, 0.5%</td>
+</tr>
+<tr>
+<td>Shift-click</td>
+<td>Back to the default value</td>
+</tr>
+<tr>
+<td>Click a menu</td>
+<td>Opens its list; click a choice, or click elsewhere to close it</td>
+</tr>
+</tbody>
+</table>
+<p>Knobs with a time (Glide, Decay) work on a logarithmic scale, so the
+short end gets as much travel as the long end. Times under a second read
+in ms, longer ones in s.</p>
 </div>
 </details>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="spectrum">The Spectrum</h2>
-<p>The display at the top left draws the current object's modes as bars:</p>
+
+<section id="spectrum" class="callout callout-note card">
+<h2>The Spectrum</h2>
+<p>The display at the top left draws the current object's modes as
+bars:</p>
 <ul>
-<li><strong>Across:</strong> each mode's frequency, on a logarithmic scale, so octaves are equal widths.</li>
-<li><strong>Height:</strong> how long that mode rings, relative to the longest. A taller, more opaque bar outlasts a shorter, fainter one.</li>
+<li><strong>Across:</strong> each mode's frequency, on a logarithmic
+scale, so octaves are equal widths.</li>
+<li><strong>Height:</strong> how long that mode rings, relative to the
+longest. A taller, more opaque bar outlasts a shorter, fainter one.</li>
 </ul>
-<p>It's drawn for a nominal C3 (moved by <strong>Pitch</strong>), and redraws whenever <strong>Material</strong>, <strong>Modes</strong>, <strong>Stretch</strong>, <strong>Pitch</strong>, <strong>Decay</strong>, <strong>Damp</strong> or the <strong>Bell</strong> knobs change. It's a picture of the decays, not of loudness: <strong>Strike Pos</strong> and <strong>Brightness</strong> change how loud each mode is, which it doesn't show. It holds no controls.</p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="strike">Strike</h2>
+<p>It's drawn for a nominal C3 (moved by <strong>Pitch</strong>), and
+redraws whenever <strong>Material</strong>, <strong>Modes</strong>,
+<strong>Stretch</strong>, <strong>Pitch</strong>,
+<strong>Decay</strong>, <strong>Damp</strong> or the
+<strong>Bell</strong> knobs change. It's a picture of the decays, not of
+loudness: <strong>Strike Pos</strong> and <strong>Brightness</strong>
+change how loud each mode is, which it doesn't show. It holds no
+controls.</p>
+</section>
+<section id="strike" class="callout callout-note card">
+<h2>Strike</h2>
 <p>The exciter: what hits the object, and how hard.</p>
 <ul>
-<li><strong>Strike</strong> (Mallet / Noise): <strong>Mallet</strong> is a smooth bump, like a mallet's contact; <strong>Noise</strong> is a burst of white noise of the same length, for a scraped or brushed attack. Default Mallet.</li>
-<li><strong>Hardness</strong> (0–1, default 0.30): how long the contact lasts. <strong>0</strong> is a single-sample impulse, the hardest and brightest strike, which sets every mode ringing equally. Higher values lengthen the contact, which rolls off the upper modes, as a softer mallet does. Hardness changes the tone, not the level: the burst is scaled so a softer hit isn't louder.</li>
-<li><strong>Vel>Level</strong> (0–1, default 1.00): how much velocity sets loudness. At <strong>1</strong> loudness follows velocity fully; at <strong>0</strong> every note strikes at full level.</li>
-<li><strong>Vel>Hard</strong> (0–1, default 0.50): how much velocity hardens the strike. A harder hit shortens the contact, by up to Hardness × Vel>Hard at full velocity, so harder playing is brighter as well as louder.</li>
-<li><strong>Contact</strong> (Note-Rel / Wall-Clk): how the contact length is measured.</li>
+<li><strong>Strike</strong> (Mallet / Noise): <strong>Mallet</strong> is
+a smooth bump, like a mallet's contact; <strong>Noise</strong> is a
+burst of white noise of the same length, for a scraped or brushed
+attack. Default Mallet.</li>
+<li><strong>Hardness</strong> (0–1, default 0.30): how long the contact
+lasts. <strong>0</strong> is a single-sample impulse, the hardest and
+brightest strike, which sets every mode ringing equally. Higher values
+lengthen the contact, which rolls off the upper modes, as a softer
+mallet does. Hardness changes the tone, not the level: the burst is
+scaled so a softer hit isn't louder.</li>
+<li><strong>Vel&gt;Level</strong> (0–1, default 1.00): how much velocity
+sets loudness. At <strong>1</strong> loudness follows velocity fully; at
+<strong>0</strong> every note strikes at full level.</li>
+<li><strong>Vel&gt;Hard</strong> (0–1, default 0.50): how much velocity
+hardens the strike. A harder hit shortens the contact, by up to Hardness
+× Vel&gt;Hard at full velocity, so harder playing is brighter as well as
+louder.</li>
+<li><strong>Contact</strong> (Note-Rel / Wall-Clk): how the contact
+length is measured.
 <ul>
-<li><strong>Note-Rel</strong> (default): in periods of the played note. At Hardness 1 the contact spans 1.6 periods, so the strike sits at the same place relative to the fundamental on every key, and level and tone stay even across the keyboard. (Capped at 100 ms, which matters only below about 25 Hz.)</li>
-<li><strong>Wall-Clk</strong>: in fixed time, up to 20 ms at Hardness 1, like a real mallet: low notes come out fuller and high notes brighter and more percussive.</li>
+<li><strong>Note-Rel</strong> (default): in periods of the played note.
+At Hardness 1 the contact spans 1.6 periods, so the strike sits at the
+same place relative to the fundamental on every key, and level and tone
+stay even across the keyboard. (Capped at 100 ms, which matters only
+below about 25 Hz.)</li>
+<li><strong>Wall-Clk</strong>: in fixed time, up to 20 ms at Hardness 1,
+like a real mallet: low notes come out fuller and high notes brighter
+and more percussive.</li>
+</ul></li>
 </ul>
-</ul>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="object">Object</h2>
+</section>
+<section id="object" class="callout callout-note card">
+<h2>Object</h2>
 <p>What is struck: its modes and its pitch.</p>
 <ul>
-<li><strong>Pitch</strong> (−4 to +4 oct, default 0): transposes the instrument, in octaves. It's continuous, so 1/12 of an octave is a semitone.</li>
-<li><strong>Material</strong> (26 choices, default Bar): the set of mode frequencies. See below.</li>
-<li><strong>Modes</strong> (1–64, default 64): how many modes sound, counting from the lowest. A material has only so many modes (see below), so a higher setting than that plays them all. Fewer modes is a simpler, purer tone. Modes that would land above the Nyquist frequency are muted.</li>
-<li><strong>Stretch</strong> (0–19, default 9): inharmonicity. It steps through a table of values: <strong>9 is none</strong>, higher steps push the upper modes sharp (as stiffness does in a real bar or piano string), lower steps pull them flat. The steps are −0.5, −0.2, −0.1, −0.05, −0.02, −0.01, −0.005, −0.002, −0.001, <strong>0</strong>, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, and each mode's frequency ratio is raised to the power 1 + that value. The knob shows the step number, not the value.</li>
+<li><strong>Pitch</strong> (−4 to +4 oct, default 0): transposes the
+instrument, in octaves. It's continuous, so 1/12 of an octave is a
+semitone.</li>
+<li><strong>Material</strong> (26 choices, default Bar): the set of mode
+frequencies. See below.</li>
+<li><strong>Modes</strong> (1–64, default 64): how many modes sound,
+counting from the lowest. A material has only so many modes (see below),
+so a higher setting than that plays them all. Fewer modes is a simpler,
+purer tone. Modes that would land above the Nyquist frequency are
+muted.</li>
+<li><strong>Stretch</strong> (0–19, default 9): inharmonicity. It steps
+through a table of values: <strong>9 is none</strong>, higher steps push
+the upper modes sharp (as stiffness does in a real bar or piano string),
+lower steps pull them flat. The steps are −0.5, −0.2, −0.1, −0.05,
+−0.02, −0.01, −0.005, −0.002, −0.001, <strong>0</strong>, 0.001, 0.002,
+0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, and each mode's frequency
+ratio is raised to the power 1 + that value. The knob shows the step
+number, not the value.</li>
 </ul>
-</div>
-</div>
+</section>
 <details class="disclosure">
 <summary class="disclosure-title subtle">The materials</summary>
+
 <div class="disclosure-content">
-<p>The first twelve are tables of real objects, worked out from their physics. The number is how many modes each has.</p>
-<p>| Material | Modes | What it is | |---|---|---| | String | 16 | An ideal string: exactly harmonic, a clear pitch | | Bar | 8 | A free bar (an untuned glockenspiel bar): strongly inharmonic, the struck-metal sound | | Tuned Bar | 6 | A marimba or vibraphone bar, undercut so its first overtones sit at 4× and 10× | | Membrane | 16 | An ideal drum head: inharmonic (Stretch can pull it toward a pitch) | | Open Tube | 12 | A tube open at both ends | | Closed Tube | 10 | A tube closed at one end | | Tine | 6 | A tine, as in an electric piano | | Bell | 12 | A bell, whose hum tone outlasts the others | | Guitar Body | 12 | The resonances of a guitar's body | | Violin Body | 14 | The resonances of a violin's body | | Soundboard | 18 | A piano soundboard | | Generic Body | 16 | A general instrument body |</p>
-<p>The other fourteen are <strong>generated series</strong>: mathematical sets of ratios that don't come from any real object. They produce up to 64 modes, fewer for series that grow fast. Integer series (Harmonic, Octave, Fibonacci, Prime, Triangular, Tetrahedral, Partition) fuse into a pitch; irrational ones (Golden, Silver) don't, and clang.</p>
-<p>| Material | Ratios | |---|---| | Harmonic | 1, 2, 3, 4 … | | Octave | Powers of 2: an octave stack | | Fibonacci | 1, 2, 3, 5, 8 …: harmonics with gaps | | Prime | 1, 2, 3, 5, 7 …: different gaps, hollower | | Triangular | 1, 3, 6, 10 …: sparse | | Tetrahedral | 1, 4, 10, 20 …: starts on the marimba tuning | | Partition | The partition numbers 1, 2, 3, 5, 7, 11 … | | Golden | Powers of φ: the most irrational | | Silver | Powers of 1 + √2: a sparser cousin of Golden | | Piano | A slightly stiff string, its upper harmonics a little sharp | | Power | n^1.5, between a string and a bar | | Sqrt | √n: slow-growing and dense, like a plate | | Box 3D | The modes of a rectangular room: dense | | Harmonic # | The harmonic numbers 1, 1.5, 1.83 …: logarithmic, lots of beating |</p>
+<p>The first twelve are tables of real objects, worked out from their
+physics. The number is how many modes each has.</p>
+<table>
+<thead>
+<tr>
+<th>Material</th>
+<th>Modes</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>String</td>
+<td>16</td>
+<td>An ideal string: exactly harmonic, a clear pitch</td>
+</tr>
+<tr>
+<td>Bar</td>
+<td>8</td>
+<td>A free bar (an untuned glockenspiel bar): strongly inharmonic, the
+struck-metal sound</td>
+</tr>
+<tr>
+<td>Tuned Bar</td>
+<td>6</td>
+<td>A marimba or vibraphone bar, undercut so its first overtones sit at
+4× and 10×</td>
+</tr>
+<tr>
+<td>Membrane</td>
+<td>16</td>
+<td>An ideal drum head: inharmonic (Stretch can pull it toward a
+pitch)</td>
+</tr>
+<tr>
+<td>Open Tube</td>
+<td>12</td>
+<td>A tube open at both ends</td>
+</tr>
+<tr>
+<td>Closed Tube</td>
+<td>10</td>
+<td>A tube closed at one end</td>
+</tr>
+<tr>
+<td>Tine</td>
+<td>6</td>
+<td>A tine, as in an electric piano</td>
+</tr>
+<tr>
+<td>Bell</td>
+<td>12</td>
+<td>A bell, whose hum tone outlasts the others</td>
+</tr>
+<tr>
+<td>Guitar Body</td>
+<td>12</td>
+<td>The resonances of a guitar's body</td>
+</tr>
+<tr>
+<td>Violin Body</td>
+<td>14</td>
+<td>The resonances of a violin's body</td>
+</tr>
+<tr>
+<td>Soundboard</td>
+<td>18</td>
+<td>A piano soundboard</td>
+</tr>
+<tr>
+<td>Generic Body</td>
+<td>16</td>
+<td>A general instrument body</td>
+</tr>
+</tbody>
+</table>
+<p>The other fourteen are <strong>generated series</strong>:
+mathematical sets of ratios that don't come from any real object. They
+produce up to 64 modes, fewer for series that grow fast. Integer series
+(Harmonic, Octave, Fibonacci, Prime, Triangular, Tetrahedral, Partition)
+fuse into a pitch; irrational ones (Golden, Silver) don't, and
+clang.</p>
+<table>
+<thead>
+<tr>
+<th>Material</th>
+<th>Ratios</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harmonic</td>
+<td>1, 2, 3, 4 …</td>
+</tr>
+<tr>
+<td>Octave</td>
+<td>Powers of 2: an octave stack</td>
+</tr>
+<tr>
+<td>Fibonacci</td>
+<td>1, 2, 3, 5, 8 …: harmonics with gaps</td>
+</tr>
+<tr>
+<td>Prime</td>
+<td>1, 2, 3, 5, 7 …: different gaps, hollower</td>
+</tr>
+<tr>
+<td>Triangular</td>
+<td>1, 3, 6, 10 …: sparse</td>
+</tr>
+<tr>
+<td>Tetrahedral</td>
+<td>1, 4, 10, 20 …: starts on the marimba tuning</td>
+</tr>
+<tr>
+<td>Partition</td>
+<td>The partition numbers 1, 2, 3, 5, 7, 11 …</td>
+</tr>
+<tr>
+<td>Golden</td>
+<td>Powers of φ: the most irrational</td>
+</tr>
+<tr>
+<td>Silver</td>
+<td>Powers of 1 + √2: a sparser cousin of Golden</td>
+</tr>
+<tr>
+<td>Piano</td>
+<td>A slightly stiff string, its upper harmonics a little sharp</td>
+</tr>
+<tr>
+<td>Power</td>
+<td>n^1.5, between a string and a bar</td>
+</tr>
+<tr>
+<td>Sqrt</td>
+<td>√n: slow-growing and dense, like a plate</td>
+</tr>
+<tr>
+<td>Box 3D</td>
+<td>The modes of a rectangular room: dense</td>
+</tr>
+<tr>
+<td>Harmonic #</td>
+<td>The harmonic numbers 1, 1.5, 1.83 …: logarithmic, lots of
+beating</td>
+</tr>
+</tbody>
+</table>
 </div>
 </details>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="decay">Decay</h2>
+
+<section id="decay" class="callout callout-note card">
+<h2>Decay</h2>
 <p>How long the object rings, and which modes die first.</p>
 <ul>
-<li><strong>Decay</strong> (20 ms to 60 s, default 2.00 s): the T60 of the lowest mode, the time it takes to fall by 60 dB. This is the length of the note.</li>
-<li><strong>Damp</strong> (0–3, default 0.90): how much faster the upper modes die than the lowest. Each mode's decay is Decay × ratio^−Damp, where ratio is its frequency over the fundamental's. At <strong>0</strong> every mode rings as long as the lowest, like metal; around <strong>2</strong> the upper modes die quickly, like wood.</li>
-<li><strong>Bell Amt</strong> (−4 to +4 oct, default 0): adds a bump to the decay curve, so a band of modes rings longer (positive) or shorter (negative) than Damp alone gives. It's in octaves of decay time: +2 rings 4× longer at the band's centre, −2 4× shorter. <strong>0</strong> turns the bump off.</li>
-<li><strong>Bell Ctr</strong> (0–7 oct, default 2.00): the centre of that band, in octaves above the fundamental.</li>
-<li><strong>Bell Wid</strong> (0.1–4 oct, default 0.40): the width of the band, in octaves.</li>
+<li><strong>Decay</strong> (20 ms to 60 s, default 2.00 s): the T60 of
+the lowest mode, the time it takes to fall by 60 dB. This is the length
+of the note.</li>
+<li><strong>Damp</strong> (0–3, default 0.90): how much faster the upper
+modes die than the lowest. Each mode's decay is Decay × ratio^−Damp,
+where ratio is its frequency over the fundamental's. At
+<strong>0</strong> every mode rings as long as the lowest, like metal;
+around <strong>2</strong> the upper modes die quickly, like wood.</li>
+<li><strong>Bell Amt</strong> (−4 to +4 oct, default 0): adds a bump to
+the decay curve, so a band of modes rings longer (positive) or shorter
+(negative) than Damp alone gives. It's in octaves of decay time: +2
+rings 4× longer at the band's centre, −2 4× shorter. <strong>0</strong>
+turns the bump off.</li>
+<li><strong>Bell Ctr</strong> (0–7 oct, default 2.00): the centre of
+that band, in octaves above the fundamental.</li>
+<li><strong>Bell Wid</strong> (0.1–4 oct, default 0.40): the width of
+the band, in octaves.</li>
 </ul>
-<p>The Bell knobs do nothing while Bell Amt is 0. The spectrum shows their effect as a hump or a dip in the bar heights.</p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="global">Global</h2>
+<p>The Bell knobs do nothing while Bell Amt is 0. The spectrum shows
+their effect as a hump or a dip in the bar heights.</p>
+</section>
+<section id="global" class="callout callout-note card">
+<h2>Global</h2>
 <ul>
-<li><strong>Voices</strong> (Mono / Poly 10 / Poly 20 / Poly 32, default Poly 10): how many notes can sound at once. See <a href="#voices-midi">Voices and MIDI</a>.</li>
-<li><strong>Glide</strong> (0.1 ms to 2 s, default 10 ms): the time to slide from one note's pitch to the next. <strong>Only in Mono</strong>; in the Poly modes each note starts on its own pitch.</li>
-<li><strong>Level</strong> (0–2, default 0.50): the output level, as a gain.</li>
-<li><strong>Spread</strong> (0–1, default 0.30): spreads the modes across the stereo field, lowest on the left to highest on the right. <strong>0</strong> puts them all in the centre.</li>
-<li><strong>MPE</strong> (Off / On, default Off): treats the input as an MPE controller (a lower zone). See <a href="#voices-midi">Voices and MIDI</a>. Presets don't change it: it describes your controller, not the sound.</li>
+<li><strong>Voices</strong> (Mono / Poly 10 / Poly 20 / Poly 32, default
+Poly 10): how many notes can sound at once. See <a
+href="#voices-midi">Voices and MIDI</a>.</li>
+<li><strong>Glide</strong> (0.1 ms to 2 s, default 10 ms): the time to
+slide from one note's pitch to the next. <strong>Only in Mono</strong>;
+in the Poly modes each note starts on its own pitch.</li>
+<li><strong>Level</strong> (0–2, default 0.50): the output level, as a
+gain.</li>
+<li><strong>Spread</strong> (0–1, default 0.30): spreads the modes
+across the stereo field, lowest on the left to highest on the right.
+<strong>0</strong> puts them all in the centre.</li>
+<li><strong>MPE</strong> (Off / On, default Off): treats the input as an
+MPE controller (a lower zone). See <a href="#voices-midi">Voices and
+MIDI</a>. Presets don't change it: it describes your controller, not the
+sound.</li>
 </ul>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="timbre">Timbre</h2>
-<p>How the strike sets each mode ringing. Both are read <strong>at the strike</strong>, so turning them while a note rings changes nothing until the next note.</p>
+</section>
+<section id="timbre" class="callout callout-note card">
+<h2>Timbre</h2>
+<p>How the strike sets each mode ringing. Both are read <strong>at the
+strike</strong>, so turning them while a note rings changes nothing
+until the next note.</p>
 <ul>
-<li><strong>Strike Pos</strong> (0–1, default 0.25): where on the object it's struck. Striking at a mode's node leaves that mode silent; <strong>0.5</strong> cancels every even mode, as plucking a string in the middle does, for a hollow tone. Near <strong>0</strong> (the edge) the low modes are weak and the sound is thin.</li>
-<li><strong>Brightness</strong> (−1 to +1, default 0): tilts the modes' levels. Positive favours the upper modes, negative the lower. The overall level stays the same, so Brightness is a tone control, not a volume control.</li>
+<li><strong>Strike Pos</strong> (0–1, default 0.25): where on the object
+it's struck. Striking at a mode's node leaves that mode silent;
+<strong>0.5</strong> cancels every even mode, as plucking a string in
+the middle does, for a hollow tone. Near <strong>0</strong> (the edge)
+the low modes are weak and the sound is thin.</li>
+<li><strong>Brightness</strong> (−1 to +1, default 0): tilts the modes'
+levels. Positive favours the upper modes, negative the lower. The
+overall level stays the same, so Brightness is a tone control, not a
+volume control.</li>
 </ul>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="expression">Expression</h2>
-<p>What a controller's <strong>pressure</strong> and <strong>timbre</strong> do to a note. Each knob is 0 by default, which does nothing, so a controller that sends no pressure or timbre sounds the same with these up.</p>
+</section>
+<section id="expression" class="callout callout-note card">
+<h2>Expression</h2>
+<p>What a controller's <strong>pressure</strong> and
+<strong>timbre</strong> do to a note. Each knob is 0 by default, which
+does nothing, so a controller that sends no pressure or timbre sounds
+the same with these up.</p>
 <ul>
-<li><strong>Press>Decay</strong> (−4 to +4 oct, default 0): pressure changes the decay time of the ringing note, by this many octaves at full pressure (+2 rings 4× longer). Positive: press to keep it ringing, ease off to damp it. Negative: pressing damps it, like a hand on a bar. It works all through the note.</li>
-<li><strong>Tmb>Tilt</strong> (−3 to +3, default 0): timbre adds to <strong>Damp</strong>, by this much at full timbre. Positive darkens the tail, negative brightens it. It works all through the note.</li>
-<li><strong>Tmb>Pos</strong> (−1 to +1, default 0): timbre adds to <strong>Strike Pos</strong>, by this much at full timbre, so where your finger sits is where the mallet hits. It's read <strong>at the strike</strong> only.</li>
+<li><strong>Press&gt;Decay</strong> (−4 to +4 oct, default 0): pressure
+changes the decay time of the ringing note, by this many octaves at full
+pressure (+2 rings 4× longer). Positive: press to keep it ringing, ease
+off to damp it. Negative: pressing damps it, like a hand on a bar. It
+works all through the note.</li>
+<li><strong>Tmb&gt;Tilt</strong> (−3 to +3, default 0): timbre adds to
+<strong>Damp</strong>, by this much at full timbre. Positive darkens the
+tail, negative brightens it. It works all through the note.</li>
+<li><strong>Tmb&gt;Pos</strong> (−1 to +1, default 0): timbre adds to
+<strong>Strike Pos</strong>, by this much at full timbre, so where your
+finger sits is where the mallet hits. It's read <strong>at the
+strike</strong> only.</li>
 </ul>
-<p><strong>Pressure</strong> is channel pressure, poly pressure, or a CLAP Pressure expression. <strong>Timbre</strong> is CC 74 on the note's channel, MIDI 2.0 per-note controller 74, or a CLAP Brightness expression. A per-note value wins over the channel's. Changes are smoothed over 2 ms.</p>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="voices-midi">Voices and MIDI</h2>
-<p><strong>Voices.</strong> In the Poly modes each note gets its own voice, up to 10, 20 or 32; past that, a sounding voice is taken for the new note. Because notes ring after note-off, a fast passage with a long Decay can use many voices: choose Poly 20 or 32 for that. <strong>Mono</strong> plays one voice: a new note while another is held strikes the same resonators again and glides them to the new pitch (see <strong>Glide</strong>), so the old note's ring carries into the new one. Letting go of the new note goes back to the note still held.</p>
-<p><strong>Sustain pedal</strong> (CC 64) holds released notes in the Poly modes. Since a struck note rings on anyway, the pedal mostly matters for what still controls the note: see <i>Released notes</i> below.</p>
-<p><strong>MIDI 2.0 first.</strong> StruckRoom prefers MIDI 2.0 from the host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI 2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In MIDI 2.0, a note-on with velocity 0 is a note-on; <strong>Vel>Level</strong> decides how loud it is.</p>
-<p><strong>A note is note number + channel + group.</strong> The same key on two channels is two independent notes.</p>
-</div>
-</div>
+<p><strong>Pressure</strong> is channel pressure, poly pressure, or a
+CLAP Pressure expression. <strong>Timbre</strong> is CC 74 on the note's
+channel, MIDI 2.0 per-note controller 74, or a CLAP Brightness
+expression. A per-note value wins over the channel's. Changes are
+smoothed over 2 ms.</p>
+</section>
+<section id="voices-midi" class="callout callout-note card">
+<h2>Voices and MIDI</h2>
+<p><strong>Voices.</strong> In the Poly modes each note gets its own
+voice, up to 10, 20 or 32; past that, a sounding voice is taken for the
+new note. Because notes ring after note-off, a fast passage with a long
+Decay can use many voices: choose Poly 20 or 32 for that.
+<strong>Mono</strong> plays one voice: a new note while another is held
+strikes the same resonators again and glides them to the new pitch (see
+<strong>Glide</strong>), so the old note's ring carries into the new
+one. Letting go of the new note goes back to the note still held.</p>
+<p><strong>Sustain pedal</strong> (CC 64) holds released notes in the
+Poly modes. Since a struck note rings on anyway, the pedal mostly
+matters for what still controls the note: see <em>Released notes</em>
+below.</p>
+<p><strong>MIDI 2.0 first.</strong> StruckRoom prefers MIDI 2.0 from the
+host, so a note's exact pitch (MIDI 2.0 Pitch 7.9) reaches the
+resonators unchanged. MIDI 1.0 works too; its values are scaled to MIDI
+2.0's, so velocity 127, CC 127 and a full pitch bend are full scale. In
+MIDI 2.0, a note-on with velocity 0 is a note-on;
+<strong>Vel&gt;Level</strong> decides how loud it is.</p>
+<p><strong>A note is note number + channel + group.</strong> The same
+key on two channels is two independent notes.</p>
+</section>
 <details class="disclosure">
 <summary class="disclosure-title subtle">Pitch bend</summary>
+
 <div class="disclosure-content">
 <ul>
-<li><strong>Channel pitch bend</strong> (MIDI 1.0 or 2.0) is <strong>±2 semitones</strong> by default. Each note follows the bend of the channel it was played on, so with one note per channel it's per-note bend.</li>
-<li><strong>RPN 0</strong> (pitch bend sensitivity) sets a channel's range.</li>
-<li><strong>MIDI 2.0 per-note pitch bend</strong> bends only the note it names, over the same range as its channel's bend. A controller can give per-note bend a range of its own with MIDI 2.0 registered controller 7, as KeyboardEDO does.</li>
-<li><strong>Pitch 7.25</strong> (MIDI 2.0 per-note controller 3) sets an absolute pitch for a key, and the bends offset from it. It retunes the sounding note and stays with the key: later notes on that key start at it, unless the note-on carries its own Pitch 7.9 pitch. Per-Note Management Reset clears it.</li>
-<li>Bends come after <strong>Glide</strong>, so glide never smears a bend, and they bend a ringing tail smoothly rather than re-striking it. Bend changes are smoothed over 2 ms, and a note starts at its bent pitch.</li>
-<li>Per-note bend resets on each note-on. One sent before its note-on is ignored.</li>
+<li><strong>Channel pitch bend</strong> (MIDI 1.0 or 2.0) is <strong>±2
+semitones</strong> by default. Each note follows the bend of the channel
+it was played on, so with one note per channel it's per-note bend.</li>
+<li><strong>RPN 0</strong> (pitch bend sensitivity) sets a channel's
+range.</li>
+<li><strong>MIDI 2.0 per-note pitch bend</strong> bends only the note it
+names, over the same range as its channel's bend. A controller can give
+per-note bend a range of its own with MIDI 2.0 registered controller 7,
+as KeyboardEDO does.</li>
+<li><strong>Pitch 7.25</strong> (MIDI 2.0 per-note controller 3) sets an
+absolute pitch for a key, and the bends offset from it. It retunes the
+sounding note and stays with the key: later notes on that key start at
+it, unless the note-on carries its own Pitch 7.9 pitch. Per-Note
+Management Reset clears it.</li>
+<li>Bends come after <strong>Glide</strong>, so glide never smears a
+bend, and they bend a ringing tail smoothly rather than re-striking it.
+Bend changes are smoothed over 2 ms, and a note starts at its bent
+pitch.</li>
+<li>Per-note bend resets on each note-on. One sent before its note-on is
+ignored.</li>
 </ul>
 </div>
 </details>
+
 <details class="disclosure">
 <summary class="disclosure-title subtle">MPE</summary>
+
 <div class="disclosure-content">
-<p>With <strong>MPE</strong> on, StruckRoom treats its input as an MPE <strong>lower zone</strong>: channel 1 is the master channel, 2–16 are the member channels, one per note. StruckRoom only receives MPE; it never sends it.</p>
+<p>With <strong>MPE</strong> on, StruckRoom treats its input as an MPE
+<strong>lower zone</strong>: channel 1 is the master channel, 2–16 are
+the member channels, one per note. StruckRoom only receives MPE; it
+never sends it.</p>
 <ul>
-<li>A member channel's bend range is <strong>±48 semitones</strong> by default, and the master channel's bend (±2) is added to every note, so the controller's pitch wheel moves everything on top of each note's own slide.</li>
+<li>A member channel's bend range is <strong>±48 semitones</strong> by
+default, and the master channel's bend (±2) is added to every note, so
+the controller's pitch wheel moves everything on top of each note's own
+slide.</li>
 <li>RPN 0 on any member channel sets the range of all of them.</li>
-<li>Pressure and timbre (CC 74) drive the <a href="#expression">Expression</a> knobs. A member note takes the higher of its own value and the master channel's.</li>
-<li>Ranges set by RPN 0 go back to their defaults when MPE is switched on or off, and on an MPE Configuration Message.</li>
+<li>Pressure and timbre (CC 74) drive the <a
+href="#expression">Expression</a> knobs. A member note takes the higher
+of its own value and the master channel's.</li>
+<li>Ranges set by RPN 0 go back to their defaults when MPE is switched
+on or off, and on an MPE Configuration Message.</li>
 </ul>
 </div>
 </details>
+
 <details class="disclosure">
 <summary class="disclosure-title subtle">Released notes</summary>
+
 <div class="disclosure-content">
-<p>A struck note rings for seconds after its note-off. Once it's released (or held only by the sustain pedal), its own per-note messages no longer reach it, as the MPE specification says: so when an MPE controller re-centres a member channel for the next note, the ringing tail stays where it was. The master channel's bend still moves it.</p>
-<p>With MPE off, an ordinary pitch wheel still bends released notes. MIDI 2.0 per-note messages stop at note-off. CLAP note expressions sent by note id keep working until the note has rung out.</p>
+<p>A struck note rings for seconds after its note-off. Once it's
+released (or held only by the sustain pedal), its own per-note messages
+no longer reach it, as the MPE specification says: so when an MPE
+controller re-centres a member channel for the next note, the ringing
+tail stays where it was. The master channel's bend still moves it.</p>
+<p>With MPE off, an ordinary pitch wheel still bends released notes.
+MIDI 2.0 per-note messages stop at note-off. CLAP note expressions sent
+by note id keep working until the note has rung out.</p>
 </div>
 </details>
+
 <details class="disclosure">
 <summary class="disclosure-title subtle">CLAP note expressions and note end</summary>
+
 <div class="disclosure-content">
-<p>Hosts such as Bitwig send per-note expression as CLAP note expressions:</p>
+<p>Hosts such as Bitwig send per-note expression as CLAP note
+expressions:</p>
 <ul>
-<li><strong>Tuning</strong> becomes an exact per-note pitch (as Pitch 7.25), so any amount of tuning is exact rather than limited to the bend range. It lasts for its note only.</li>
-<li><strong>Pressure</strong> and <strong>Brightness</strong> drive the <a href="#expression">Expression</a> knobs' pressure and timbre.</li>
-<li>Volume, Pan, Vibrato and Expression (the CLAP expression of that name) are ignored.</li>
+<li><strong>Tuning</strong> becomes an exact per-note pitch (as Pitch
+7.25), so any amount of tuning is exact rather than limited to the bend
+range. It lasts for its note only.</li>
+<li><strong>Pressure</strong> and <strong>Brightness</strong> drive the
+<a href="#expression">Expression</a> knobs' pressure and timbre.</li>
+<li>Volume, Pan, Vibrato and Expression (the CLAP expression of that
+name) are ignored.</li>
 </ul>
-<p>For a note the host sends as a CLAP note, StruckRoom reports the note's end when it actually stops sounding: when it has rung down to silence, when its voice is taken, or (in Mono) when it leaves the held notes. So the host keeps that note's modulation running through its tail.</p>
+<p>For a note the host sends as a CLAP note, StruckRoom reports the
+note's end when it actually stops sounding: when it has rung down to
+silence, when its voice is taken, or (in Mono) when it leaves the held
+notes. So the host keeps that note's modulation running through its
+tail.</p>
 </div>
 </details>
+
 <details class="disclosure">
 <summary class="disclosure-title subtle">All Notes Off and All Sound Off</summary>
+
 <div class="disclosure-content">
 <ul>
-<li><strong>All Notes Off (CC 123)</strong> releases every note on the channel it arrives on, pedal-held ones included. They ring out like any released note.</li>
-<li><strong>All Sound Off (CC 120)</strong> silences that channel's notes at once, ringing tails included.</li>
+<li><strong>All Notes Off (CC 123)</strong> releases every note on the
+channel it arrives on, pedal-held ones included. They ring out like any
+released note.</li>
+<li><strong>All Sound Off (CC 120)</strong> silences that channel's
+notes at once, ringing tails included.</li>
 </ul>
 </div>
 </details>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="presets">Presets</h2>
-<p>The <strong>Preset</strong> menu at the top right holds the factory presets, in alphabetical order:</p>
-<p>| Preset | Material | Decay | Character | |---|---|---|---| | Glass Bell | Bell, 48 modes | 8 s | Hard strike, very little damping: long and bright | | Init | Bar, 64 modes | 2 s | The default patch | | Marimba | Tuned Bar, 24 modes | 0.7 s | Heavy damping, a little dark | | Tine EP | Tine, 32 modes | 3 s | A bell bump (+1 oct at 3 oct up) for an electric-piano shimmer | | Wood Block | Closed Tube, 12 modes, an octave up | 0.12 s | Very hard strike, heavy damping: a short knock |</p>
+
+<section id="presets" class="callout callout-note card">
+<h2>Presets</h2>
+<p>The <strong>Preset</strong> menu at the top right holds the factory
+presets, in alphabetical order:</p>
+<table>
+<thead>
+<tr>
+<th>Preset</th>
+<th>Material</th>
+<th>Decay</th>
+<th>Character</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Glass Bell</td>
+<td>Bell, 48 modes</td>
+<td>8 s</td>
+<td>Hard strike, very little damping: long and bright</td>
+</tr>
+<tr>
+<td>Init</td>
+<td>Bar, 64 modes</td>
+<td>2 s</td>
+<td>The default patch</td>
+</tr>
+<tr>
+<td>Marimba</td>
+<td>Tuned Bar, 24 modes</td>
+<td>0.7 s</td>
+<td>Heavy damping, a little dark</td>
+</tr>
+<tr>
+<td>Tine EP</td>
+<td>Tine, 32 modes</td>
+<td>3 s</td>
+<td>A bell bump (+1 oct at 3 oct up) for an electric-piano shimmer</td>
+</tr>
+<tr>
+<td>Wood Block</td>
+<td>Closed Tube, 12 modes, an octave up</td>
+<td>0.12 s</td>
+<td>Very hard strike, heavy damping: a short knock</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li><strong>Choosing a preset sets every sound parameter</strong>, Voices and the Expression knobs included. It leaves the <strong>MPE</strong> switch alone.</li>
-<li>The menu shows <strong>--</strong> until you choose one, and again when the editor is reopened. Changing a knob after choosing a preset doesn't change the name shown.</li>
+<li><strong>Choosing a preset sets every sound parameter</strong>,
+Voices and the Expression knobs included. It leaves the
+<strong>MPE</strong> switch alone.</li>
+<li>The menu shows <strong>--</strong> until you choose one, and again
+when the editor is reopened. Changing a knob after choosing a preset
+doesn't change the name shown.</li>
 </ul>
-<p><strong>Your own patches:</strong> <strong>Save</strong> and <strong>Load</strong>, left of Help, write the patch to a file and read one back, through the system's file dialog. The first time, the dialog opens on <strong>Documents/StruckRoom</strong>; after that, on the last folder you used.</p>
+<p><strong>Your own patches:</strong> <strong>Save</strong> and
+<strong>Load</strong>, left of Help, write the patch to a file and read
+one back, through the system's file dialog. The first time, the dialog
+opens on <strong>Documents/StruckRoom</strong>; after that, on the last
+folder you used.</p>
 <ul>
-<li>A saved patch has every sound parameter, like a factory preset, and leaves out <strong>MPE</strong>. Loading one sets those parameters and leaves MPE alone.</li>
-<li>The menu then shows the patch's name, dimmed, in place of a factory preset's.</li>
-<li>The file is the same JSON as the factory presets, so a patch you save can be put in the source's <code>Presets</code> folder to build it in as a factory preset.</li>
-<li>The host still saves the patch with its project, whether or not you saved it to a file.</li>
+<li>A saved patch has every sound parameter, like a factory preset, and
+leaves out <strong>MPE</strong>. Loading one sets those parameters and
+leaves MPE alone.</li>
+<li>The menu then shows the patch's name, dimmed, in place of a factory
+preset's.</li>
+<li>The file is the same JSON as the factory presets, so a patch you
+save can be put in the source's <code>Presets</code> folder to build it
+in as a factory preset.</li>
+<li>The host still saves the patch with its project, whether or not you
+saved it to a file.</li>
 </ul>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="tips">Tips</h2>
+</section>
+<section id="tips" class="callout callout-note card">
+<h2>Tips</h2>
 <ul>
-<li><strong>Start from the material, then the decay.</strong> Material decides what the object is; Decay and Damp decide what it's made of. The same <strong>Tuned Bar</strong> is a marimba with Damp around 1.6 and a vibraphone with Damp near 0.</li>
-<li><strong>Damp is the material knob.</strong> Low Damp sounds like metal or glass, high Damp like wood or skin.</li>
-<li><strong>Hardness for tone, Brightness for balance.</strong> Hardness changes the attack (a soft mallet takes the click off). Brightness changes the balance of the whole ring.</li>
-<li><strong>Strike Pos 0.5</strong> on String or Harmonic cancels the even modes, for a hollow, clarinet-like tone.</li>
-<li><strong>Stretch</strong> above 9 makes a harmonic material stiffer, its upper modes sharp, as in a piano string: try String with Stretch at step 11–13.</li>
-<li><strong>Fewer Modes</strong> makes a purer, simpler sound, and costs less CPU.</li>
-<li><strong>For an even keyboard</strong>, keep <strong>Contact</strong> on Note-Rel. Wall-Clk makes the bass boomier and the top pingier, as real mallets do.</li>
-<li><strong>Long decays need voices.</strong> With a Decay of several seconds, Poly 20 or Poly 32 keeps older notes from being cut off.</li>
-<li><strong>For a hand-damped bar on a pressure controller</strong>, set Press>Decay negative: press into a note to stop it.</li>
+<li><strong>Start from the material, then the decay.</strong> Material
+decides what the object is; Decay and Damp decide what it's made of. The
+same <strong>Tuned Bar</strong> is a marimba with Damp around 1.6 and a
+vibraphone with Damp near 0.</li>
+<li><strong>Damp is the material knob.</strong> Low Damp sounds like
+metal or glass, high Damp like wood or skin.</li>
+<li><strong>Hardness for tone, Brightness for balance.</strong> Hardness
+changes the attack (a soft mallet takes the click off). Brightness
+changes the balance of the whole ring.</li>
+<li><strong>Strike Pos 0.5</strong> on String or Harmonic cancels the
+even modes, for a hollow, clarinet-like tone.</li>
+<li><strong>Stretch</strong> above 9 makes a harmonic material stiffer,
+its upper modes sharp, as in a piano string: try String with Stretch at
+step 11–13.</li>
+<li><strong>Fewer Modes</strong> makes a purer, simpler sound, and costs
+less CPU.</li>
+<li><strong>For an even keyboard</strong>, keep <strong>Contact</strong>
+on Note-Rel. Wall-Clk makes the bass boomier and the top pingier, as
+real mallets do.</li>
+<li><strong>Long decays need voices.</strong> With a Decay of several
+seconds, Poly 20 or Poly 32 keeps older notes from being cut off.</li>
+<li><strong>For a hand-damped bar on a pressure controller</strong>, set
+Press&gt;Decay negative: press into a note to stop it.</li>
 </ul>
-</div>
-</div>
-<div class="callout callout-note card">
-<div class="callout-content">
-<h2 id="troubleshooting">Troubleshooting</h2>
+</section>
+<section id="troubleshooting" class="callout callout-note card">
+<h2>Troubleshooting</h2>
 <ul>
-<li><strong>Notes keep ringing after I let go.</strong> That's the design: a struck object rings until it dies away. Shorten <strong>Decay</strong>, raise <strong>Damp</strong>, or use a negative <strong>Press>Decay</strong> to damp it by pressure.</li>
-<li><strong>Notes cut off in fast passages.</strong> They're running out of voices. Choose Poly 20 or Poly 32, or shorten Decay.</li>
-<li><strong>Glide does nothing.</strong> It only works in <strong>Mono</strong>.</li>
-<li><strong>Raising Modes changes nothing.</strong> The material has fewer modes than that (see <i>The materials</i> under <a href="#object">Object</a>).</li>
-<li><strong>Strike Pos or Brightness don't change a held note.</strong> They're read at the strike; play the next note.</li>
-<li><strong>The Expression knobs do nothing.</strong> The controller isn't sending pressure or CC 74, or the knobs are at 0.</li>
-<li><strong>Bends are huge.</strong> MPE is on and the controller isn't an MPE controller: member channels bend ±48 semitones. Turn <strong>MPE</strong> off.</li>
-<li><strong>Distortion.</strong> Lower <strong>Level</strong>. Many loud notes ringing together add up.</li>
-<li><strong>A rebuilt StruckRoom doesn't show its changes.</strong> Quit and restart the host: a running host keeps the plugin it loaded first.</li>
+<li><strong>Notes keep ringing after I let go.</strong> That's the
+design: a struck object rings until it dies away. Shorten
+<strong>Decay</strong>, raise <strong>Damp</strong>, or use a negative
+<strong>Press&gt;Decay</strong> to damp it by pressure.</li>
+<li><strong>Notes cut off in fast passages.</strong> They're running out
+of voices. Choose Poly 20 or Poly 32, or shorten Decay.</li>
+<li><strong>Glide does nothing.</strong> It only works in
+<strong>Mono</strong>.</li>
+<li><strong>Raising Modes changes nothing.</strong> The material has
+fewer modes than that (see <em>The materials</em> under <a
+href="#object">Object</a>).</li>
+<li><strong>Strike Pos or Brightness don't change a held note.</strong>
+They're read at the strike; play the next note.</li>
+<li><strong>The Expression knobs do nothing.</strong> The controller
+isn't sending pressure or CC 74, or the knobs are at 0.</li>
+<li><strong>Bends are huge.</strong> MPE is on and the controller isn't
+an MPE controller: member channels bend ±48 semitones. Turn
+<strong>MPE</strong> off.</li>
+<li><strong>Distortion.</strong> Lower <strong>Level</strong>. Many loud
+notes ringing together add up.</li>
+<li><strong>A rebuilt StruckRoom doesn't show its changes.</strong> Quit
+and restart the host: a running host keeps the plugin it loaded
+first.</li>
 </ul>
-</div>
-</div>
+</section>
 </div>
 </body>
 </html>
