@@ -9,7 +9,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
 - [x] ss-room fuzz test; ctest 13/13; clap-validator 35 pass, 0 fail
 - [x] By hand: play it in a host and decide which controls matter (2026-10-25; the wall effects came out of it)
 - [x] Editor tabs: Object / Room (draggable map) / Walls (decay plot)
-- [ ] By hand: check the tabs at several window sizes, Retina and non-Retina
+- [x] By hand: check the tabs at several window sizes, Retina and non-Retina (2026-11-07)
 - [x] Rename leftovers: the help page describes the room, its tabs and the wall effects
 - [x] Help page: what costs CPU and how to manage it (Detail and voices, with measured numbers)
 - [x] roomlab exp5: wall effects (frequency shift, flex, soft clip, rattle) rendered, measured and timed
@@ -21,7 +21,7 @@ Cloned from StruckSynth on 2026-10-22; M1-M4 below are StruckSynth's, inherited 
       material, it barely followed velocity, and Flex already bends the reflection with level
 - [x] Wall materials: the object's full list (26), generators included
 - [x] By hand: the Walls tab's three rows checked (2026-10-25)
-- [ ] By hand: listen to the wall effects in a host
+- [x] By hand: listen to the wall effects in a host (all four heard in StageHand, 2026-11-07)
 - [x] Room modes 29% cheaper: each mode's input gain folded into its output gains, so two groups of
       eight fit the baseline's registers (720 -> 510 ns a sample per voice at Detail 12, i3-9100); output
       the same to float rounding (-84..-93 dB; -66 dB after a four-octave mono retune)
