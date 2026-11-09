@@ -382,7 +382,7 @@ All five use Poly 4 and the default room and walls: 3 × 2.2 wavelengths, walls 
 
 **Your own patches:** **Save** and **Load**, left of Help, write the patch to a file and read one back, through the system's file dialog. The first time, the dialog opens on **Documents/StruckRoom**; after that, on the last folder you used.
 - A saved patch has every sound parameter, like a factory preset, and leaves out **MPE**. Loading one sets those parameters and leaves MPE alone.
-- The menu then shows the patch's name, dimmed, in place of a factory preset's.
+- The menu then shows the patch's name, dimmed, in place of a factory preset's. If a file can't be written or isn't a StruckRoom patch, the menu says **Couldn't save** or **Couldn't load** instead.
 - The file is the same JSON as the factory presets, so a patch you save can be put in the source's `Presets` folder to build it in as a factory preset.
 - The host still saves the patch with its project, whether or not you saved it to a file.
 :::
