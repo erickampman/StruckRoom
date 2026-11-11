@@ -202,6 +202,7 @@ if(APPLE)
     set_target_properties(StruckRoom PROPERTIES
         BUNDLE TRUE
         BUNDLE_EXTENSION "clap"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/clap-Info.plist.in"
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.unlikelyware.struckroom"
         MACOSX_BUNDLE_BUNDLE_NAME "StruckRoom"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
