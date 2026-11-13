@@ -19,7 +19,7 @@ echo "==> Submodule URLs (after a pull that changed one)"
 git submodule sync --recursive
 
 echo "==> Top-level submodules"
-git submodule update --init dpf external/clap external/clap-wrapper external/vst3sdk
+git submodule update --init dpf external/clap external/uw-core external/clap-wrapper external/vst3sdk
 
 echo "==> dpf: nested pugl (GUI backend)"
 git -C dpf submodule update --init dgl/src/pugl-upstream

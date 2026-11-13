@@ -141,6 +141,12 @@ set_target_properties(struckroom_core PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
+# uw-core (git submodule), for one header: uw/base/HelpServer.h, which serves the
+# help page over loopback on Linux (a snap browser can't read /tmp). Nothing to link.
+# STRUCKROOM_UW_CORE_DIR points at another uw-core clone (e.g. ../uw-core).
+set(STRUCKROOM_UW_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/uw-core" CACHE PATH "uw-core source")
+target_include_directories(struckroom_core PRIVATE "${STRUCKROOM_UW_CORE_DIR}/src")
+
 target_include_directories(struckroom_core PUBLIC
     src                               # plugin_gui.h (the DSP <-> GUI seam)
     plugin                            # DistrhoPluginInfo.h + StruckRoomParams.h
