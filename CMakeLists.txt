@@ -94,10 +94,11 @@ add_custom_target(generate_presets DEPENDS "${STRUCKROOM_GENERATED_PRESETS_H}")
 # on the resource file once built — same reasoning as the preset codegen above.
 set(STRUCKROOM_RESOURCES_HPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.hpp")
 set(STRUCKROOM_RESOURCES_CPP "${CMAKE_BINARY_DIR}/generated/EmbeddedResources.cpp")
-# res2c.py embeds a whole folder and names each symbol by the file's stem, so help.md (the source of
-# help.html) would collide with help.html. Copy everything but *.md into a staging folder first.
+# res2c.py embeds a whole folder and names each symbol by the file's stem, so help.html (help.md made
+# into a web page, for the site) would collide with help.md, which the plugin's help window reads.
+# Copy everything but help.html into a staging folder first.
 file(GLOB STRUCKROOM_RESOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/Resources/*")
-list(FILTER STRUCKROOM_RESOURCE_FILES EXCLUDE REGEX "\\.md$")
+list(FILTER STRUCKROOM_RESOURCE_FILES EXCLUDE REGEX "\\.html$")
 set(STRUCKROOM_RESOURCES_STAGING "${CMAKE_BINARY_DIR}/generated/Resources")
 add_custom_command(
     OUTPUT "${STRUCKROOM_RESOURCES_HPP}" "${STRUCKROOM_RESOURCES_CPP}"
@@ -141,8 +142,8 @@ set_target_properties(struckroom_core PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON)
-# uw-core (git submodule), for one header: uw/base/HelpServer.h, which serves the
-# help page over loopback on Linux (a snap browser can't read /tmp). Nothing to link.
+# uw-core (git submodule), for headers only: uw/dgl/HelpWindow.hpp and uw/help/, the help page
+# in the plugin's own window. Nothing to link.
 # STRUCKROOM_UW_CORE_DIR points at another uw-core clone (e.g. ../uw-core).
 set(STRUCKROOM_UW_CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/uw-core" CACHE PATH "uw-core source")
 target_include_directories(struckroom_core PRIVATE "${STRUCKROOM_UW_CORE_DIR}/src")

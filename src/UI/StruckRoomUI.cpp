@@ -426,12 +426,11 @@ public:
         fPresetDropdown->setPlaceholder("--");
         fPresetDropdown->setIndex(-1); // no preset selected until the user picks one
 
-        // help.html shows the logo as "Unlikelyware.png", so it is written out under that name.
-        fHelpButton = std::make_unique<HelpButton>(this, std::vector<HelpButton::File>{
-            { "StruckRoom-help.html", EmbeddedResources::helpData, EmbeddedResources::helpDataSize },
-            { "Unlikelyware.png", EmbeddedResources::Unlikelyware_Final_ColorData,
-                                  EmbeddedResources::Unlikelyware_Final_ColorDataSize },
-        });
+        // help.md shows the logo as "Unlikelyware.png".
+        fHelpButton = std::make_unique<HelpButton>(this, "StruckRoom Help",
+            EmbeddedResources::helpData, EmbeddedResources::helpDataSize,
+            std::vector<DGL_NAMESPACE::uwhelp::Image>{{"Unlikelyware.png", EmbeddedResources::Unlikelyware_Final_ColorData,
+                                                       EmbeddedResources::Unlikelyware_Final_ColorDataSize}});
         fHelpButton->setLabel("Help");
 
         // Save / Load the patch as a preset file (PresetFile.hpp), through the system file dialog.
