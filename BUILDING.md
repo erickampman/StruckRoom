@@ -37,14 +37,13 @@ cd StruckRoom
 tools/fetch_deps.sh
 ```
 
-`tools/fetch_deps.sh` checks out the git submodules at their pinned commits, then applies the
-clap-wrapper patch in `patches/`. Run it again after a `git pull` that moves, adds or re-points a
+`tools/fetch_deps.sh` checks out the git submodules at their pinned commits. Run it again after a `git pull` that moves, adds or re-points a
 submodule: a plain pull leaves them where they were.
 
 Of the VST® 3 SDK's nested submodules it takes only the four the build needs (a plain
-`--recurse-submodules` also pulls its docs, tutorials and VSTGUI). The patch makes the AUv2 editor
-draw: clap-wrapper's AUv2 view never calls `gui->show()`, which is where the editor starts its
-render timer.
+`--recurse-submodules` also pulls its docs, tutorials and VSTGUI). clap-wrapper is Unlikelyware's fork (github.com/erickampman/clap-wrapper, `unlikelyware` branch,
+from v0.16.0): its AUv2 view calls `gui->show()`, where the editor starts its render timer
+(upstream's never does), and its AUv2 keeps a MIDI 2.0 plugin's output whole. No patch is applied.
 
 ## Build and test
 
@@ -157,7 +156,7 @@ commands under "Build and test", and for a plugin `cmake --build build --target 
 same package list, the same `build/` folder, the same option names (`<PROJECT>_BUILD_VST3`,
 `<PROJECT>_UW_CORE_DIR` and so on). What's different here, and why:
 
-- One of the seven synths (PlainOldSynth, StruckSynth, StruckRoom, StruckGaussian, StruckKit, IFSynth, ModicumFM), which share the PolygraphModular framework, vendored, and DPF for the UI. `tools/fetch_deps.sh` also applies `patches/` to clap-wrapper (its AUv2 view), so `external/clap-wrapper` shows a local change: that is the patch, not uncommitted work.
+- One of the seven synths (PlainOldSynth, StruckSynth, StruckRoom, StruckGaussian, StruckKit, IFSynth, ModicumFM), which share the PolygraphModular framework, vendored, and DPF for the UI. Its clap-wrapper is Unlikelyware's fork (its AUv2 view calls `show()`), so nothing is patched at build time.
 - Nothing else.
 
 VST is a registered trademark of Steinberg Media Technologies GmbH.
