@@ -326,6 +326,12 @@ if(STRUCKROOM_BUILD_AUV2)
     add_custom_target(install-auv2
         COMMAND ${CMAKE_COMMAND} -E make_directory "${STRUCKROOM_AUV2_DIR}"
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${STRUCKROOM_AUV2_DIR}/StruckRoom.component"
+        # clap-wrapper writes its AU plist (AudioComponents, BNDL) into the bundle only when the
+        # plugin relinks; a CMake regenerate without a relink leaves CMake's default plist, and
+        # macOS then never registers the AU. Put the generated plist back on every install.
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "${CMAKE_CURRENT_BINARY_DIR}/StruckRoom_auv2-build-helper-output/auv2_Info.plist"
+                "$<TARGET_BUNDLE_CONTENT_DIR:StruckRoom_auv2>/Info.plist"
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "$<TARGET_BUNDLE_DIR:StruckRoom_auv2>"
             "${STRUCKROOM_AUV2_DIR}/StruckRoom.component"
